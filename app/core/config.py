@@ -1,14 +1,45 @@
 import os
+from dotenv import load_dotenv
 
-PROJECT_NAME = "ShareCare API"
+load_dotenv()
 
-OPEN_AI_KEY = os.getenv("OPEN_AI_KEY")
-
-POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "fake_password")
+# PostgreSQL Database Settings
+POSTGRES_USER = os.getenv("POSTGRES_USER", "postgres")
+POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "password")
+POSTGRES_HOST = os.getenv("POSTGRES_HOST", "localhost")
 POSTGRES_PORT = os.getenv("POSTGRES_PORT", "5432")
-POSTGRES_USER = os.getenv("POSTGRES_USER", "user")
-POSTGRES_DB = os.getenv("POSTGRES_DB", "sharecare")
+POSTGRES_DB = os.getenv("POSTGRES_DB", "sharecaredb")
 
-FERNET_KEY = os.getenv("ENCRYPTION_KEY", "fApsNI6yQf9_LLLkwRH0BYNa3Y64WvIb-b6xofLG4PU=")
+# Build DATABASE_URL
+DATABASE_URL = f"postgresql+asyncpg://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
 
-SERVER_PORT = int(os.getenv("SERVER_PORT", 8000))
+# JWT
+SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-in-production")
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+# OTP
+OTP_EXPIRE_MINUTES = 5
+OTP_LENGTH = 4
+
+# Encryption (Fernet for phone number encryption)
+FERNET_KEY = os.getenv("FERNET_KEY", "your-fernet-key-here").encode()
+ENCRYPTION_KEY = os.getenv("ENCRYPTION_KEY", "default-key-change-in-production")
+
+# API Settings
+API_TITLE = "Dobrodar API"
+API_VERSION = "0.1.0"
+API_DESCRIPTION = "Сервис обмена вещами между пользователями"
+
+# CORS
+ALLOWED_ORIGINS = [
+    "http://localhost",
+    "http://localhost:3000",
+    "http://localhost:8000",
+    "http://127.0.0.1:3000",
+]
+
+# Upload settings
+MAX_UPLOAD_SIZE = 10 * 1024 * 1024  # 10MB
+ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "gif", "webp"}
+UPLOAD_DIR = "uploads"

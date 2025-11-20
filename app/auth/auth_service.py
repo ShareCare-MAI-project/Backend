@@ -1,5 +1,4 @@
-import uuid
-
+import uuid6
 from fastapi import HTTPException
 from starlette.status import HTTP_400_BAD_REQUEST
 
@@ -47,7 +46,10 @@ class AuthService:
         else:
             username = user.name
 
-        token = str(uuid.uuid4())
+        # UUID input should be a string, bytes or UUID object
+        # [type=uuid_type, input_value=UUID('...'), input_type=UUID]
+        # Поэтому просто uuid_utils.uuid7() не воркает -> оборачиваем в str
+        token = str(uuid6.uuid7())
 
         return AuthResponse(
             token=token,

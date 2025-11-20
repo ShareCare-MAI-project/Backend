@@ -1,16 +1,32 @@
-# BUILD .VENV
-FROM python:3.13.9-alpine3.22 AS builder
-WORKDIR /venv_build
-COPY pyproject.toml uv.lock ./
-RUN apk add uv && uv sync
+# Builder stage
+FROM python:3.13.9-slim AS builder
 
-# RUNTIME
-FROM python:3.13.9-alpine3.22 AS runtime
+WORKDIR /venv_build
+
+# Копируем ВСЁ, включая папку app и файлы конфигурации
+COPY . .
+
+RUN apt-get update && apt-get install -y \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN pip install uv && uv sync
+
+# Runtime stage
+FROM python:3.13.9-slim AS runtime
 
 WORKDIR /sharecare
+
+# Копируем готовое виртуальное окружение из builder
 COPY --from=builder /venv_build/.venv /sharecare/.venv
-COPY ./app ./app
+
+# Копируем исходники приложения
+COPY --from=builder /venv_build/app /sharecare/app
+COPY --from=builder /venv_build/pyproject.toml /sharecare/
+COPY --from=builder /venv_build/uv.lock /sharecare/
+
 ENV PATH="/sharecare/.venv/bin:$PATH"
 
+EXPOSE 8000
 
-
+CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
