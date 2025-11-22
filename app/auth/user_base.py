@@ -3,8 +3,7 @@ from typing import Optional
 
 import uuid_utils
 from sqlalchemy import String, select, LargeBinary, UUID
-from sqlalchemy.orm import Mapped
-from sqlalchemy.testing.schema import mapped_column
+from sqlalchemy.orm import Mapped, mapped_column
 
 from app.auth.utils.otp_manager import OTPManager
 from app.auth.utils.phone_number import PhoneNumber

@@ -6,6 +6,7 @@ from app.auth.auth_models import LoginRequest, OTPVerifyRequest, AuthResponse
 from app.auth.user_base import UserBase
 from app.auth.utils.otp_manager import OTPManager
 from app.core.database import default_async_db_request
+from app.auth.token_base import TokenBase
 
 FAKE_OTP = "1111"
 
@@ -41,7 +42,7 @@ class AuthService:
                 encrypted_phone=OTPManager.encrypt_phone_number(phone)
             )
             await default_async_db_request(new_user.create)
-
+            user = new_user  # Чтобы получить uuid
             username = None
         else:
             username = user.name
@@ -50,6 +51,8 @@ class AuthService:
         # [type=uuid_type, input_value=UUID('...'), input_type=UUID]
         # Поэтому просто uuid_utils.uuid7() не воркает -> оборачиваем в str
         token = str(uuid_utils.uuid7())
+
+        await default_async_db_request(TokenBase(token=token, user_id=user.id).upsert)
 
         return AuthResponse(
             token=token,
