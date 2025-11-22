@@ -12,7 +12,7 @@ TAG = "Auth"
 
 
 @router.post(
-    "/request-otp",
+    "/auth/request-otp",
     status_code=status.HTTP_200_OK,
     summary="Запросить OTP-код для входа",
     description="Отправить 4-значный код подтверждения на номер телефона",
@@ -29,7 +29,7 @@ async def login(request: LoginRequest):
 
 
 @router.post(
-    "/verify-otp",
+    "/auth/verify-otp",
     response_model=AuthResponse,
     status_code=status.HTTP_200_OK,
     summary="Войти с OTP кодом",
