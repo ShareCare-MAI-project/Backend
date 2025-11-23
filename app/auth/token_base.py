@@ -1,4 +1,4 @@
-from sqlalchemy import UUID
+from sqlalchemy import UUID, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import mapped_column, Mapped
@@ -32,3 +32,8 @@ class TokenBase(Base):
             set_=dict(token=self.token)
         )
         await session.execute(stmt)
+
+    @classmethod
+    async def get_user_id_by_token(cls, token: uuid.UUID, session: AsyncSession) -> UUID | None:
+        stmt = select(TokenBase.user_id).where(TokenBase.token == token)
+        return (await session.scalars(stmt)).one_or_none()

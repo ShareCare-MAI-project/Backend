@@ -3,6 +3,7 @@ from typing import Optional
 
 import uuid_utils
 from sqlalchemy import String, select, LargeBinary, UUID
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.auth.utils.otp_manager import OTPManager
@@ -27,14 +28,16 @@ class UserBase(Base):
     name: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
     encrypted_phone: Mapped[bytes] = mapped_column(LargeBinary, unique=True)
 
+    telegram_username: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)  # unique=True нет, т.к. MVP
+
     def __repr__(self) -> str:
         return f"UserBase(id={self.id}, name={self.name}, encrypted_phone={self.encrypted_phone})"
 
     @staticmethod
-    async def update(new_object: 'UserBase', session):
-        session.merge(new_object)
+    async def update(new_object: 'UserBase', session: AsyncSession):
+        await session.merge(new_object)
 
-    async def create(self, session):
+    async def create(self, session: AsyncSession):
         session.add(self)
 
     @classmethod
@@ -46,3 +49,13 @@ class UserBase(Base):
         """
         statement = select(UserBase).where(UserBase.encrypted_phone == OTPManager.encrypt_phone_number(phone))
         return (await session.scalars(statement)).one_or_none()
+
+    @classmethod
+    async def get_by_id(cls, user_id: uuid.UUID, session: AsyncSession) -> 'UserBase':
+        """
+        :param user_id:
+        :param session:
+        :return: МОЖЕТ ВЕРНУТЬ None!!! (не могу указать, т.к. питон...)
+        """
+        stmt = select(UserBase).where(UserBase.id == user_id)
+        return (await session.scalars(stmt)).one_or_none()

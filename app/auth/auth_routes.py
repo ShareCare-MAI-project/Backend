@@ -1,9 +1,11 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from starlette import status
 
 from app.auth.auth_models import LoginRequest, AuthResponse, OTPVerifyRequest, UserRegistrationRequest
 from app.auth.auth_service import AuthService
 from app.utils.handle_errors import handle_errors
+from app.auth.user_base import UserBase
+from app.utils.get_current_user import get_current_user
 
 router = APIRouter()
 
@@ -37,12 +39,14 @@ async def verify_otp(request: OTPVerifyRequest):
 
 @router.post(
     "/auth/registration",
-    # response_model=AuthResponse,
     status_code=status.HTTP_200_OK,
     summary="Зарегистрировать пользователя",
     description="Добавить в БД имя и телеграм (уже есть токен и айди)",
     tags=[TAG]
 )
 @handle_errors(error_message="Ошибка при регистрации пользователя")
-async def register_user(request: UserRegistrationRequest):
-    pass
+async def register_user(
+        request: UserRegistrationRequest,
+        user: UserBase = Depends(get_current_user)
+):
+    return await AuthService.register_user(user, request)

@@ -61,8 +61,16 @@ class AuthService:
         )
 
     @staticmethod
-    async def register_user(user_id: uuid_utils.uuid7(), request: UserRegistrationRequest):
+    async def register_user(user: UserBase, request: UserRegistrationRequest):
         name = request.name
         telegram = request.telegram
 
+        await default_async_db_request(lambda session: UserBase.update(
+            UserBase(
+                id=user.id,  # по айди понимает, что мы меняем =)
+                name=name,
+                telegram_username=telegram
+            ), session
+        ))
 
+        return {"success": True}
