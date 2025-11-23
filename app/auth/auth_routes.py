@@ -9,15 +9,12 @@ from app.utils.get_current_user import get_current_user
 
 router = APIRouter()
 
-TAG = "Auth"
-
 
 @router.post(
-    "/auth/request-otp",
+    "/request-otp",
     status_code=status.HTTP_200_OK,
     summary="Запросить OTP-код для входа",
-    description="Отправить 4-значный код подтверждения на номер телефона",
-    tags=[TAG]
+    description="Отправить 4-значный код подтверждения на номер телефона"
 )
 @handle_errors(error_message="Ошибка при отправке кода")
 async def login(request: LoginRequest):
@@ -25,12 +22,11 @@ async def login(request: LoginRequest):
 
 
 @router.post(
-    "/auth/verify-otp",
+    "/verify-otp",
     response_model=AuthResponse,
     status_code=status.HTTP_200_OK,
     summary="Войти с OTP кодом",
-    description="Подтвердить номер телефона с помощью OTP кода и получить токен",
-    tags=[TAG]
+    description="Подтвердить номер телефона с помощью OTP кода и получить токен"
 )
 @handle_errors(error_message="Ошибка при верификации кода")
 async def verify_otp(request: OTPVerifyRequest):
@@ -38,11 +34,10 @@ async def verify_otp(request: OTPVerifyRequest):
 
 
 @router.post(
-    "/auth/registration",
+    "/registration",
     status_code=status.HTTP_200_OK,
     summary="Зарегистрировать пользователя",
-    description="Добавить в БД имя и телеграм (уже есть токен и айди)",
-    tags=[TAG]
+    description="Добавить в БД имя и телеграм (уже есть токен и айди)"
 )
 @handle_errors(error_message="Ошибка при регистрации пользователя")
 async def register_user(
