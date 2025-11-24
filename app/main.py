@@ -2,7 +2,7 @@ from fastapi import FastAPI
 
 from app.core.config import PROJECT_NAME, SERVER_PORT
 from app.core.database import setup_db
-from app.utils import setup
+from app.utils.server_utils import setup
 
 app = FastAPI(title=f"{PROJECT_NAME}")
 setup(app)

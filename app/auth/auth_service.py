@@ -3,9 +3,11 @@ from fastapi import HTTPException
 from starlette.status import HTTP_400_BAD_REQUEST
 
 from app.auth.auth_models import LoginRequest, OTPVerifyRequest, AuthResponse
-from app.auth.user_base import UserBase
+from app.auth.auth_models import UserRegistrationRequest
+from app.auth.token_base import TokenBase
 from app.auth.utils.otp_manager import OTPManager
 from app.core.database import default_async_db_request
+from app.user.user_base import UserBase
 
 FAKE_OTP = "1111"
 
@@ -41,7 +43,7 @@ class AuthService:
                 encrypted_phone=OTPManager.encrypt_phone_number(phone)
             )
             await default_async_db_request(new_user.create)
-
+            user = new_user  # Чтобы получить uuid
             username = None
         else:
             username = user.name
@@ -51,7 +53,24 @@ class AuthService:
         # Поэтому просто uuid_utils.uuid7() не воркает -> оборачиваем в str
         token = str(uuid_utils.uuid7())
 
+        await default_async_db_request(TokenBase(token=token, user_id=user.id).upsert)
+
         return AuthResponse(
             token=token,
             name=username
         )
+
+    @staticmethod
+    async def register_user(user: UserBase, request: UserRegistrationRequest):
+        name = request.name
+        telegram = request.telegram
+
+        await default_async_db_request(lambda session: UserBase.update(
+            UserBase(
+                id=user.id,  # по айди понимает, что мы меняем =)
+                name=name,
+                telegram_username=telegram
+            ), session
+        ))
+
+        return {"success": True}
