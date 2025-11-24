@@ -5,9 +5,9 @@ from starlette.status import HTTP_400_BAD_REQUEST
 from app.auth.auth_models import LoginRequest, OTPVerifyRequest, AuthResponse
 from app.auth.auth_models import UserRegistrationRequest
 from app.auth.token_base import TokenBase
-from app.auth.user_base import UserBase
 from app.auth.utils.otp_manager import OTPManager
 from app.core.database import default_async_db_request
+from app.user.user_base import UserBase
 
 FAKE_OTP = "1111"
 

@@ -24,5 +24,6 @@ class AuthResponse(BaseModel):
 # Registration Block
 class UserRegistrationRequest(BaseModel):
     name: str = Field(max_length=20, examples=["Артём"], description="Имя пользователя")
-    telegram: str = Field(min_length=5, max_length=32, description="Телеграм (username) пользователя; Храним БЕЗ собаки")
+    telegram: str = Field(min_length=5, max_length=32,
+                          description="Телеграм (username) пользователя; Храним БЕЗ собаки")
 

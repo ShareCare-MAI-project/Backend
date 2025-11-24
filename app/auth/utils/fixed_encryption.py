@@ -24,7 +24,12 @@ class FixedEncryption:
         ciphertext = encryptor.update(padded_data) + encryptor.finalize()
         return base64.urlsafe_b64encode(iv + ciphertext)
 
-    def decrypt(self, encrypted_bytes: bytes) -> bytes:
+    def decrypt(self, encrypted_data: bytes) -> bytes:
+        try:
+            encrypted_bytes = base64.urlsafe_b64decode(encrypted_data)
+        except Exception:
+            encrypted_bytes = encrypted_data
+
         iv = encrypted_bytes[:16]
 
         ciphertext = encrypted_bytes[16:]

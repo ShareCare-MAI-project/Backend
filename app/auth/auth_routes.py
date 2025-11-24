@@ -4,7 +4,7 @@ from starlette import status
 from app.auth.auth_models import LoginRequest, AuthResponse, OTPVerifyRequest, UserRegistrationRequest
 from app.auth.auth_service import AuthService
 from app.utils.handle_errors import handle_errors
-from app.auth.user_base import UserBase
+from app.user.user_base import UserBase
 from app.utils.get_current_user import get_current_user
 
 router = APIRouter()

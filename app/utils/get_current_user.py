@@ -3,7 +3,7 @@ import uuid
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from app.auth.token_base import TokenBase
-from app.auth.user_base import UserBase
+from app.user.user_base import UserBase
 from app.core.database import default_async_db_request
 
 security = HTTPBearer()
