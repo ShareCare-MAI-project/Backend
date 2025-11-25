@@ -14,6 +14,7 @@ class OTPVerifyRequest(BaseModel):
 
 
 class AuthResponse(BaseModel):
+    user_id: UUID7 = Field(description="UUID7 userId")
     token: UUID7 = Field(description="UUID7 токен")  # str(uuid)
     # Если имени нет, то перебрасываем на заполнение профиля (в приложении)
     name: Optional[str] = Field(None,
