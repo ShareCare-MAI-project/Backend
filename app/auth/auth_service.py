@@ -56,6 +56,7 @@ class AuthService:
         await default_async_db_request(TokenBase(token=token, user_id=user.id).upsert)
 
         return AuthResponse(
+            user_id=str(user.id),
             token=token,
             name=username
         )
