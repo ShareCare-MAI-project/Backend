@@ -1,4 +1,4 @@
-from sqlalchemy import UUID, select
+from sqlalchemy import UUID, select, ForeignKey
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import mapped_column, Mapped
@@ -19,6 +19,7 @@ class TokenBase(Base):
 
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID,
+        ForeignKey("users.id", ondelete="CASCADE"),
         unique=True,
         nullable=False
     )
