@@ -3,6 +3,7 @@ from typing import Optional, List
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.items.models import ItemBase
 
@@ -14,12 +15,18 @@ class ItemCrud:
 
     @staticmethod
     async def get_item(db: AsyncSession, item_id: uuid.UUID) -> Optional[ItemBase]:
-        stmt = select(ItemBase).where(ItemBase.id == item_id)
+        stmt = select(ItemBase).where(ItemBase.id == item_id).options(
+            selectinload(ItemBase.image_bases),
+            selectinload(ItemBase.item_delivery_bases)
+        )
         return (await db.scalars(stmt)).one_or_none()
 
     @staticmethod
     async def get_items(db: AsyncSession, skip: int = 0, limit: int = 100) -> List[ItemBase]:
-        stmt = select(ItemBase).offset(skip).limit(limit)
+        stmt = select(ItemBase).offset(skip).limit(limit).options(
+            selectinload(ItemBase.image_bases),
+            selectinload(ItemBase.item_delivery_bases)
+        )
         return list((await db.scalars(stmt)).all())
 
     # @staticmethod
