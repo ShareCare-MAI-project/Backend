@@ -1,51 +1,80 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, status
+from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
-from app.items.schemas import ItemCreate, ItemResponse, ItemUpdate
-from app.items.crud import get_item, create_item, get_item, delete_item, update_item, reserve_item, close_item
-from app.core.database import get_db  
+from app.core.database import get_async_db
 
-router = APIRouter(prefix="/items", tags=["items"])
+from app.items.schemas import ItemResponse, Item
+from app.items.service import ItemsService
+from app.user.user_base import UserBase
+from app.utils.di.require_auth import require_auth
+from app.utils.decorators.handle_errors import handle_errors
+from app.utils.di.get_current_user import get_current_user
+
+router = APIRouter()
+
 
 @router.get("/", response_model=list[ItemResponse])
-def read_items(db: Session = Depends(get_db)):
-    return get_item(db)
+@handle_errors()
+async def get_items(
+        db: AsyncSession = Depends(get_async_db),
+        _=Depends(require_auth)
+):
+    return await ItemsService.get_items(db)
 
-@router.post("/", response_model=ItemResponse, status_code=status.HTTP_201_CREATED)
-def add_item(item: ItemCreate, db: Session = Depends(get_db)):
-    return create_item(db, item)
+
+@router.post("/", status_code=status.HTTP_201_CREATED)
+@handle_errors()
+async def create_item(
+        item: Item,
+        db: AsyncSession = Depends(get_async_db),
+        user: UserBase = Depends(get_current_user),
+        _=Depends(require_auth)  # Не нужно, т.к. выше мы получаем пользователя
+):
+    return await ItemsService.create_item(
+        db, item=item, owner_id=user.id
+    )
+
 
 @router.get("/{item_id}", response_model=ItemResponse)
-def read_item(item_id: UUID, db: Session = Depends(get_db)):
-    item = get_item(db, item_id)
-    if not item:
-        raise HTTPException(status_code=404, detail="товар не найден")
-    return item
+@handle_errors()
+async def get_item(
+        item_id: UUID,
+        db: AsyncSession = Depends(get_async_db),
+        _=Depends(require_auth)
+):
+    return await ItemsService.get_item(db, item_id)
 
-@router.delete("/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
-def remove_item(item_id: UUID, db: Session = Depends(get_db)):
-    success = delete_item(db, item_id)
-    if not success:
-        raise HTTPException(status_code=404, detail="товар не найден")
-    return
-
-@router.patch("/{item_id}", response_model=ItemResponse)
-def update__item(item_id: UUID, item_update: ItemUpdate, db: Session = Depends(get_db)):
-    item = update_item(db, item_id, item_update)
-    if not item:
-        raise HTTPException(status_code=404, detail="товар не найден")
-    return item
-
-@router.post("/{item_id}/reserve", response_model=ItemResponse)
-def reserve__item(item_id: UUID, recipient_id: UUID, db: Session = Depends(get_db)):
-    item = reserve_item(db, item_id, recipient_id)
-    if not item:
-        raise HTTPException(status_code=400, detail="не найден или зарезервирован")
-    return item
-
-@router.post("/{item_id}/close", response_model=ItemResponse)
-def close__item(item_id: UUID, db: Session = Depends(get_db)):
-    item = close_item(db, item_id)
-    if not item:
-        raise HTTPException(status_code=404, detail="товар найден")
-    return item
+# @router.delete("/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
+# @handle_errors()
+# def remove_item(item_id: UUID, db: AsyncSession = Depends(get_async_db)):
+#     success = delete_item(db, item_id)
+#     if not success:
+#         raise HTTPException(status_code=404, detail="товар не найден")
+#     return
+#
+#
+# @router.patch("/{item_id}", response_model=ItemResponse)
+# @handle_errors()
+# def update_item(item_id: UUID, item_update: ItemUpdate, db: AsyncSession = Depends(get_async_db)):
+#     item = update_item(db, item_id, item_update)
+#     if not item:
+#         raise HTTPException(status_code=404, detail="товар не найден")
+#     return item
+#
+#
+# @router.post("/{item_id}/reserve", response_model=ItemResponse)
+# @handle_errors()
+# def reserve_item(item_id: UUID, recipient_id: UUID, db: AsyncSession = Depends(get_async_db)):
+#     item = reserve_item(db, item_id, recipient_id)
+#     if not item:
+#         raise HTTPException(status_code=400, detail="не найден или зарезервирован")
+#     return item
+#
+#
+# @router.post("/{item_id}/close", response_model=ItemResponse)
+# @handle_errors()
+# def close_item(item_id: UUID, db: AsyncSession = Depends(get_async_db)):
+#     item = close_item(db, item_id)
+#     if not item:
+#         raise HTTPException(status_code=404, detail="товар найден")
+#     return item

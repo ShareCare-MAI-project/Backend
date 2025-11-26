@@ -1,60 +1,22 @@
-from pydantic import BaseModel
-from typing import Optional, List
-from datetime import datetime
-from uuid import UUID
-import enum
+from typing import Optional
 
-class Category(str, enum.Enum):
-    clothes = "Одежда"
-    toys = "Игрушки"
-    home = "Быт"
-    electronics = "Электроника"
-    other = "Другое"
+from pydantic import BaseModel, UUID7
 
-class Status(str, enum.Enum):
-    listed = "выложено"
-    chosen = "выбран получатель"
-    closed = "закрыто"
+from app.items.enums import ItemCategory, ItemDelivery
 
-class Delivery(str, enum.Enum):
-    pickup = "Самовывоз"
-    post = "Доставка почтой"
-    owner_delivery = "Человек готов доставить сам"
 
-class ItemBase(BaseModel):
+class Item(BaseModel):
     title: str
-    description: Optional[str]
-    location: Optional[str]
-    latitude: Optional[str]
-    longitude: Optional[str]
-    category: Optional[Category]
-    status: Status = Status.listed
+    description: str
+    location: str
+    # latitude: Optional[str]
+    # longitude: Optional[str]
+    category: ItemCategory
+    delivery_types: list[ItemDelivery]
 
-class ItemCreate(ItemBase):
-    owner: UUID
 
-class ItemResponse(ItemBase):
-    id: UUID
-    owner: UUID
-    recipient: Optional[UUID] = None
-    created_at: datetime
-    edited_at: Optional[datetime] = None
-
-class ItemOut(ItemBase):
-    id: UUID
-    owner: UUID
-    recipient: Optional[UUID]
-    created_at: datetime
-    edited_at: Optional[datetime]
-    class Config:
-        orm_mode = True
-
-class ItemUpdate(BaseModel):
-    title: Optional[str] = None
-    description: Optional[str] = None
-    location: Optional[str] = None
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
-    category: Optional[Category] = None
-    status: Optional[Status] = None
-    recipient: Optional[UUID] = None
+class ItemResponse(Item):
+    id: UUID7
+    owner: UUID7
+    recipient: Optional[UUID7] = None
+    images: list[str]

@@ -1,52 +1,43 @@
 import uuid
-import enum
-from sqlalchemy import Column, String, Text, Enum, ForeignKey, DateTime
+from datetime import datetime, UTC
+from typing import Optional
+
+import uuid_utils
+from sqlalchemy import String, Text, Enum, ForeignKey, DateTime, BigInteger
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.sql import func
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import Mapped, mapped_column
 
-Base = declarative_base()
+from app.core.database import Base
+from app.items.enums import ItemCategory, ItemStatus, ItemDelivery
 
-class Category(enum.Enum):
-    clothes = "Одежда"
-    toys = "Игрушки"
-    home = "Быт"
-    electronics = "Электроника"
-    other = "Другое"
 
-class Status(enum.Enum):
-    listed = "выложено"
-    chosen = "выбран получатель"
-    closed = "закрыто"
-
-class Delivery(enum.Enum):
-    pickup = "Самовывоз"
-    post = "Доставка почтой"
-    owner_delivery = "Человек готов доставить сам"
-
-class Item(Base):
+class ItemBase(Base):
     __tablename__ = "items"
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    owner = Column(UUID(as_uuid=True), nullable=False)
-    recipient = Column(UUID(as_uuid=True), nullable=True)
-    title = Column(String, nullable=False)
-    description = Column(Text)
-    location = Column(String)
-    latitude = Column(String)
-    longitude = Column(String)
-    category = Column(Enum(Category))
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    edited_at = Column(DateTime(timezone=True), onupdate=func.now())
-    status = Column(Enum(Status), nullable=False, default=Status.listed)
+    id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid_utils.uuid7)
+    owner_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    recipient_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID, ForeignKey("users.id", ondelete="CASCADE"),
+                                                              nullable=True)
+    title: Mapped[str] = mapped_column(String, nullable=False)
+    description: Mapped[str] = mapped_column(Text)
+    location: Mapped[str] = mapped_column(String)
+    # latitude = Column(String)
+    # longitude = Column(String)
+    category: Mapped[ItemCategory] = mapped_column(Enum(ItemCategory, name="item_category"))
+    status: Mapped[ItemStatus] = mapped_column(Enum(ItemStatus, name="item_status"), nullable=False,
+                                               default=ItemStatus.listed)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
+    edited_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=lambda: datetime.now(UTC))
 
-class ItemDeliveryType(Base):
+
+class ItemDeliveryTypeBase(Base):
     __tablename__ = "items_delivery_types"
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    item_id = Column(UUID(as_uuid=True), ForeignKey("items.id"))
-    delivery_type = Column(Enum(Delivery))
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    item_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("items.id", ondelete="CASCADE"))
+    delivery_type: Mapped[ItemDelivery] = mapped_column(Enum(ItemDelivery, name="item_delivery_type"))
 
-class ItemImage(Base):
+
+class ItemImageBase(Base):
     __tablename__ = "items_images"
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    item_id = Column(UUID(as_uuid=True), ForeignKey("items.id"))
-    image = Column(String)  # путь или ссылка
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    item_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("items.id", ondelete="CASCADE"))
+    image: Mapped[str] = mapped_column(String)  # Путь или ссылка

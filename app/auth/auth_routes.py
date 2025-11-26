@@ -1,11 +1,13 @@
 from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
-from app.auth.auth_models import LoginRequest, AuthResponse, OTPVerifyRequest, UserRegistrationRequest
+from app.auth.auth_schemas import LoginRequest, AuthResponse, OTPVerifyRequest, UserRegistrationRequest
 from app.auth.auth_service import AuthService
-from app.utils.handle_errors import handle_errors
+from app.utils.decorators.handle_errors import handle_errors
 from app.user.user_base import UserBase
-from app.utils.get_current_user import get_current_user
+from app.utils.di.get_current_user import get_current_user
+from app.core.database import get_async_db
 
 router = APIRouter()
 
@@ -17,7 +19,9 @@ router = APIRouter()
     description="Отправить 4-значный код подтверждения на номер телефона"
 )
 @handle_errors(error_message="Ошибка при отправке кода")
-async def login(request: LoginRequest):
+async def login(
+        request: LoginRequest,
+):
     return await AuthService.request_otp(request)
 
 
@@ -29,8 +33,11 @@ async def login(request: LoginRequest):
     description="Подтвердить номер телефона с помощью OTP кода и получить токен"
 )
 @handle_errors(error_message="Ошибка при верификации кода")
-async def verify_otp(request: OTPVerifyRequest):
-    return await AuthService.verify_otp(request)
+async def verify_otp(
+        request: OTPVerifyRequest,
+        db: AsyncSession = Depends(get_async_db)
+):
+    return await AuthService.verify_otp(db, request)
 
 
 @router.post(
@@ -42,6 +49,7 @@ async def verify_otp(request: OTPVerifyRequest):
 @handle_errors(error_message="Ошибка при регистрации пользователя")
 async def register_user(
         request: UserRegistrationRequest,
-        user: UserBase = Depends(get_current_user)
+        user: UserBase = Depends(get_current_user),
+        db: AsyncSession = Depends(get_async_db)
 ):
-    return await AuthService.register_user(user, request)
+    return await AuthService.register_user(db, user, request)

@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends
 from starlette import status
 
-from app.user.user_models import UserFullInfoResponse
-from app.utils.handle_errors import handle_errors
+from app.user.user_schemas import UserFullInfoResponse
+from app.utils.decorators.handle_errors import handle_errors
 from app.user.user_service import UserService
 from app.user.user_base import UserBase
-from app.utils.get_current_user import get_current_user
+from app.utils.di.get_current_user import get_current_user
 
 router = APIRouter()
 

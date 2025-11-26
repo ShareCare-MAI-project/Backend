@@ -1,7 +1,7 @@
 import openai
 
 
-from core.config import OPEN_AI_KEY
+from app.core.config import OPEN_AI_KEY
 
 openai.api_key = OPEN_AI_KEY
 

@@ -1,13 +1,14 @@
 import uuid_utils
 from fastapi import HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.status import HTTP_400_BAD_REQUEST
 
-from app.auth.auth_models import LoginRequest, OTPVerifyRequest, AuthResponse
-from app.auth.auth_models import UserRegistrationRequest
+from app.auth.auth_schemas import LoginRequest, OTPVerifyRequest, AuthResponse
+from app.auth.auth_schemas import UserRegistrationRequest
 from app.auth.token_base import TokenBase
 from app.auth.utils.otp_manager import OTPManager
-from app.core.database import default_async_db_request
 from app.user.user_base import UserBase
+from app.utils.consts import SUCCESS_RESPONSE
 
 FAKE_OTP = "1111"
 
@@ -23,10 +24,10 @@ class AuthService:
 
         OTPManager.add_otp_request(phone, code)
 
-        return {"success": True}
+        return SUCCESS_RESPONSE
 
     @staticmethod
-    async def verify_otp(request: OTPVerifyRequest) -> AuthResponse:
+    async def verify_otp(db: AsyncSession, request: OTPVerifyRequest) -> AuthResponse:
         """Если код совпадает, проводим авторизацию"""
         phone = request.phone
         otp = request.otp
@@ -35,14 +36,15 @@ class AuthService:
                 status_code=HTTP_400_BAD_REQUEST,
                 detail="Неверный или просроченный код подтверждения"
             )
-        user: UserBase = await default_async_db_request(lambda session: UserBase.get_by_phone(phone, session=session))
+        user: UserBase = await UserBase.get_by_phone(phone, session=db)
 
         if user is None:
             new_user = UserBase(
                 name=None,
                 encrypted_phone=OTPManager.encrypt_phone_number(phone)
             )
-            await default_async_db_request(new_user.create)
+            await new_user.create(db)
+            await db.commit()
             user = new_user  # Чтобы получить uuid
             username = None
         else:
@@ -52,8 +54,10 @@ class AuthService:
         # [type=uuid_type, input_value=UUID('...'), input_type=UUID]
         # Поэтому просто uuid_utils.uuid7() не воркает -> оборачиваем в str
         token = str(uuid_utils.uuid7())
+        token_base = TokenBase(token=token, user_id=user.id)
 
-        await default_async_db_request(TokenBase(token=token, user_id=user.id).upsert)
+        await token_base.upsert(db)
+        await db.commit()
 
         return AuthResponse(
             user_id=str(user.id),
@@ -62,16 +66,17 @@ class AuthService:
         )
 
     @staticmethod
-    async def register_user(user: UserBase, request: UserRegistrationRequest):
+    async def register_user(db: AsyncSession, user: UserBase, request: UserRegistrationRequest):
         name = request.name
         telegram = request.telegram
+        new_user = UserBase(
+            id=user.id,  # по айди понимает, что мы меняем =)
+            name=name,
+            telegram_username=telegram
+        )
+        await UserBase.update(
+            new_user, session=db
+        )
+        await db.commit()
 
-        await default_async_db_request(lambda session: UserBase.update(
-            UserBase(
-                id=user.id,  # по айди понимает, что мы меняем =)
-                name=name,
-                telegram_username=telegram
-            ), session
-        ))
-
-        return {"success": True}
+        return SUCCESS_RESPONSE
