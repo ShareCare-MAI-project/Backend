@@ -12,5 +12,5 @@ dependencies = [
     "psycopg2-binary",
     "asyncpg",
     "uuid-utils",
-    "openai"
+    "openai",
 ]

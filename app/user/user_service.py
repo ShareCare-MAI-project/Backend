@@ -3,7 +3,7 @@ from starlette.status import HTTP_400_BAD_REQUEST
 
 from app.auth.utils.otp_manager import OTPManager
 from app.user.user_base import UserBase
-from app.user.user_models import UserFullInfoResponse
+from app.user.user_schemas import UserFullInfoResponse
 from app.auth.utils.phone_number import PhoneNumber
 
 

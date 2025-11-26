@@ -8,7 +8,6 @@ app = FastAPI(title=f"{PROJECT_NAME}")
 setup(app)
 setup_db()
 
-
 @app.get("/",
          summary="Статус API",
          description="Проверка работы API",

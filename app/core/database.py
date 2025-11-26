@@ -1,7 +1,10 @@
+from typing import AsyncGenerator
+
 from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.orm import DeclarativeBase, Session
 from sqlalchemy_utils import database_exists, create_database
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_PORT, POSTGRES_DB
 
@@ -10,7 +13,7 @@ class Base(DeclarativeBase):
     pass
 
 
-# host is always 'postgres' cuz we host server and the db in the same container
+# host всегда 'postgres' потому что сервер и БД в одном контейнере
 SYNC_POSTGRES_URL = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@postgres:{POSTGRES_PORT}/{POSTGRES_DB}"
 ASYNC_POSTGRES_URL = f"postgresql+asyncpg://{POSTGRES_USER}:{POSTGRES_PASSWORD}@postgres:{POSTGRES_PORT}/{POSTGRES_DB}"
 
@@ -28,25 +31,16 @@ def setup_db() -> None:
     create_db_and_tables()
 
 
-AsyncSession = async_sessionmaker(async_engine, expire_on_commit=False)
+async_session = async_sessionmaker(async_engine, expire_on_commit=False)
 
 
-async def default_async_db_request(request):
-    """
-    Функция-обёртка для дефолтных запросов в declarative дб (rollback при ошибке и commit, если всё ок)
-
-    >> default_async_db_request(UserBase(id=str(uuid.uuid4()), name = "sample").create_user)
-
-    ВАЖНО: Прокидывает ошибку наверх
-    """
-    async with AsyncSession() as session:
+async def get_async_db() -> AsyncGenerator[AsyncSession, None]:
+    async with async_session() as session:
         try:
-            result = request(session)
-            if hasattr(result, '__await__'):
-                result = await result
-            await session.commit()
-            return result
+            yield session
         except Exception as e:
+            # откатываем все изменения при ошибке
             await session.rollback()
-            # logging.error(e)
             raise
+        finally:
+            await session.close()

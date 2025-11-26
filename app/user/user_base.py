@@ -17,7 +17,7 @@ class UserBase(Base):
     id: Mapped[uuid.UUID] = mapped_column(
         UUID,
         primary_key=True,
-        default=lambda: uuid_utils.uuid7(),
+        default=uuid_utils.uuid7,
         unique=True,
         nullable=False
     )
