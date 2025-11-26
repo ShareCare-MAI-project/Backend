@@ -28,7 +28,7 @@ async def create_item(
         item: Item,
         db: AsyncSession = Depends(get_async_db),
         user: UserBase = Depends(get_current_user),
-        _=Depends(require_auth)  # Не нужно, т.к. выше мы получаем пользователя
+        # _=Depends(require_auth) Не нужно, т.к. выше мы получаем пользователя
 ):
     return await ItemsService.create_item(
         db, item=item, owner_id=user.id
