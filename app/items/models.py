@@ -5,7 +5,7 @@ from typing import Optional
 import uuid_utils
 from sqlalchemy import String, Text, Enum, ForeignKey, DateTime, BigInteger
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
 from app.items.enums import ItemCategory, ItemStatus, ItemDelivery
@@ -28,6 +28,16 @@ class ItemBase(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
     edited_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=lambda: datetime.now(UTC))
 
+    image_bases: Mapped[list['ItemImageBase']] = relationship(
+        "ItemImageBase",
+        cascade="all, delete-orphan"
+    )
+
+    item_delivery_bases: Mapped[list['ItemDeliveryTypeBase']] = relationship(
+        "ItemDeliveryTypeBase",
+        cascade="all, delete-orphan"
+    )
+
 
 class ItemDeliveryTypeBase(Base):
     __tablename__ = "items_delivery_types"
@@ -38,6 +48,6 @@ class ItemDeliveryTypeBase(Base):
 
 class ItemImageBase(Base):
     __tablename__ = "items_images"
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True)
     item_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("items.id", ondelete="CASCADE"))
     image: Mapped[str] = mapped_column(String)  # Путь или ссылка

@@ -1,8 +1,11 @@
 import uuid
 
+from sqlalchemy.orm import Mapped
+
 from app.items.enums import ItemDelivery, ItemStatus
-from app.items.models import ItemBase
+from app.items.models import ItemBase, ItemImageBase
 from app.items.schemas import ItemResponse, Item
+from app.items.models import ItemDeliveryTypeBase
 
 
 # noinspection PyPep8Naming
@@ -37,3 +40,24 @@ def Item_to_ItemBase(item: Item,
         category=item.category,
         status=status
     )
+
+
+# noinspection PyPep8Naming
+def ItemDelivery_to_ItemDeliveryTypeBase(
+        item_delivery: ItemDelivery,
+        item_id: uuid.UUID,
+        id: uuid.UUID | None = None,
+) -> ItemDeliveryTypeBase:
+    return ItemDeliveryTypeBase(
+        id=id,
+        item_id=item_id,
+        delivery_type=item_delivery
+    )
+
+
+def image_bases_to_images_links(image_bases: Mapped[list[ItemImageBase]]) -> list[str]:
+    return [image_base.image for image_base in image_bases]
+
+
+def deliveries_bases_to_deliveries(delivery_bases: Mapped[list[ItemDeliveryTypeBase]]) -> list[ItemDelivery]:
+    return [item_base.delivery_type for item_base in delivery_bases]

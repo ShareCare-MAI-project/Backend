@@ -1,14 +1,16 @@
-from fastapi import APIRouter, Depends, status
-from sqlalchemy.ext.asyncio import AsyncSession
+import json
 from uuid import UUID
-from app.core.database import get_async_db
 
+from fastapi import APIRouter, Depends, status, Form, UploadFile, File
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.database import get_async_db
 from app.items.schemas import ItemResponse, Item
 from app.items.service import ItemsService
 from app.user.user_base import UserBase
-from app.utils.di.require_auth import require_auth
 from app.utils.decorators.handle_errors import handle_errors
 from app.utils.di.get_current_user import get_current_user
+from app.utils.di.require_auth import require_auth
 
 router = APIRouter()
 
@@ -25,13 +27,16 @@ async def get_items(
 @router.post("/", status_code=status.HTTP_201_CREATED)
 @handle_errors()
 async def create_item(
-        item: Item,
+        item_data: str = Form(..., description="JSONчик от item data (отправляем formData с мобилки)"),
+        images: list[UploadFile] = File(),
         db: AsyncSession = Depends(get_async_db),
         user: UserBase = Depends(get_current_user),
         # _=Depends(require_auth) Не нужно, т.к. выше мы получаем пользователя
 ):
+    item_dict = json.loads(item_data)
+    item = Item(**item_dict)
     return await ItemsService.create_item(
-        db, item=item, owner_id=user.id
+        db, item=item, images=images, owner_id=user.id
     )
 
 
