@@ -22,26 +22,17 @@ class ItemsService:
     @staticmethod
     async def get_item(db: AsyncSession, item_id: UUID) -> ItemResponse:
         item = await ItemCrud.get_item(db, item_id)
-        images = image_bases_to_images_links(item.image_bases)
-        delivery_types = deliveries_bases_to_deliveries(item.item_delivery_bases)
 
         if not item:
             raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="Товар не найден")
 
-        return ItemBase_to_ItemResponse(item, delivery_types=delivery_types, images=images)
+        return ItemBase_to_ItemResponse(item)
 
     @staticmethod
     async def get_items(db: AsyncSession) -> list[ItemResponse]:
         items = await ItemCrud.get_items(db)
         return list(map(
-            lambda item: ItemBase_to_ItemResponse(
-                item=item,
-                delivery_types=deliveries_bases_to_deliveries(
-                    item.item_delivery_bases),
-                images=image_bases_to_images_links(
-                    item.image_bases
-                )
-            ),
+            ItemBase_to_ItemResponse,
             items
         ))
 

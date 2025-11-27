@@ -9,17 +9,17 @@ from app.items.models import ItemDeliveryTypeBase
 
 
 # noinspection PyPep8Naming
-def ItemBase_to_ItemResponse(item: ItemBase, delivery_types: list[ItemDelivery], images: list[str]) -> ItemResponse:
+def ItemBase_to_ItemResponse(item: ItemBase) -> ItemResponse:
     return ItemResponse(
         title=item.title,
         description=item.description,
         location=item.location,
         category=item.category,
-        delivery_types=delivery_types,
+        delivery_types=deliveries_bases_to_deliveries(item.item_delivery_bases),
         id=item.id,
         owner=item.owner_id,
         recipient=item.recipient_id,
-        images=images
+        images=image_bases_to_images_links(item.image_bases)
     )
 
 
@@ -55,9 +55,9 @@ def ItemDelivery_to_ItemDeliveryTypeBase(
     )
 
 
-def image_bases_to_images_links(image_bases: Mapped[list[ItemImageBase]]) -> list[str]:
+def image_bases_to_images_links(image_bases: list[ItemImageBase]) -> list[str]:
     return [image_base.image for image_base in image_bases]
 
 
-def deliveries_bases_to_deliveries(delivery_bases: Mapped[list[ItemDeliveryTypeBase]]) -> list[ItemDelivery]:
+def deliveries_bases_to_deliveries(delivery_bases: list[ItemDeliveryTypeBase]) -> list[ItemDelivery]:
     return [item_base.delivery_type for item_base in delivery_bases]
