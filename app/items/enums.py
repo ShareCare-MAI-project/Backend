@@ -11,7 +11,7 @@ class ItemCategory(enum.Enum):
 
 class ItemStatus(enum.Enum):
     listed = "Listed"  # Нет получателя
-    chosen = "Chosen"  # Выбран получатель (не показываем больше в списке)
+    chosen = "Chosen"  # Выбран получатель / даритель (не показываем больше в списке)
     closed = "Closed"  # `Сделка прошла`
 
 
