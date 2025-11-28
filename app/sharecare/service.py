@@ -5,8 +5,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.items.cruds.item_crud import ItemCrud
 from app.items.enums import ItemStatus
 from app.items.mappers import ItemBase_to_ItemResponse
+from app.items.mappers import ItemBase_to_ItemTelegramResponse
 from app.items.models import ItemBase
 from app.sharecare.schemas import ShareCareItemsResponse
+from app.utils.funcs.get_user_telegram import get_user_telegram
 
 
 class ShareCareService:
@@ -20,6 +22,9 @@ class ShareCareService:
         ))
 
         return ShareCareItemsResponse(
-            responses=list(map(ItemBase_to_ItemResponse, await responses)),
+            responses=[ItemBase_to_ItemTelegramResponse(
+                telegram=await get_user_telegram(db, response.recipient_id),
+                item=response
+            ) for response in await responses],
             my_published_items=list(map(ItemBase_to_ItemResponse, await my_published_items)),
         )

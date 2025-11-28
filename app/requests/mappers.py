@@ -3,6 +3,7 @@ import uuid
 from app.items.enums import ItemStatus, ItemDelivery
 from app.requests.models import RequestBase, RequestDeliveryTypeBase
 from app.requests.schemas import Request
+from app.requests.schemas import RequestResponse
 
 
 # noinspection PyPep8Naming
@@ -22,6 +23,18 @@ def Requests_to_RequestBase(request: Request,
 
 
 # noinspection PyPep8Naming
+def RequestBase_to_RequestResponse(request_base: RequestBase) -> RequestResponse:
+    return RequestResponse(
+        id=request_base.id,
+        user_id=request_base.user_id,
+        text=request_base.text,
+        location=request_base.location,
+        category=request_base.category,
+        delivery_types=deliveries_bases_to_deliveries(request_base.request_delivery_bases)
+    )
+
+
+# noinspection PyPep8Naming
 def RequestDelivery_to_RequestDeliveryTypeBase(
         delivery: ItemDelivery,
         request_id: uuid.UUID,
@@ -32,3 +45,6 @@ def RequestDelivery_to_RequestDeliveryTypeBase(
         request_id=request_id,
         delivery_type=delivery
     )
+
+def deliveries_bases_to_deliveries(delivery_bases: list[RequestDeliveryTypeBase]) -> list[ItemDelivery]:
+    return [request_base.delivery_type for request_base in delivery_bases]

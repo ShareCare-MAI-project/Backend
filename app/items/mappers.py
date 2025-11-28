@@ -1,11 +1,10 @@
 import uuid
 
-from sqlalchemy.orm import Mapped
-
 from app.items.enums import ItemDelivery, ItemStatus
 from app.items.models import ItemBase, ItemImageBase
-from app.items.schemas import ItemResponse, Item
 from app.items.models import ItemDeliveryTypeBase
+from app.items.schemas import ItemResponse, Item
+from app.items.schemas import ItemTelegramResponse
 
 
 # noinspection PyPep8Naming
@@ -20,6 +19,22 @@ def ItemBase_to_ItemResponse(item: ItemBase) -> ItemResponse:
         owner=item.owner_id,
         recipient=item.recipient_id,
         images=image_bases_to_images_links(item.image_bases)
+    )
+
+
+# noinspection PyPep8Naming
+def ItemBase_to_ItemTelegramResponse(item: ItemBase, telegram: str) -> ItemTelegramResponse:
+    return ItemTelegramResponse(
+        title=item.title,
+        description=item.description,
+        location=item.location,
+        category=item.category,
+        delivery_types=deliveries_bases_to_deliveries(item.item_delivery_bases),
+        id=item.id,
+        owner=item.owner_id,
+        recipient=item.recipient_id,
+        images=image_bases_to_images_links(item.image_bases),
+        telegram=telegram
     )
 
 

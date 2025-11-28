@@ -20,3 +20,7 @@ class ItemResponse(Item):
     owner: UUID7
     recipient: Optional[UUID7] = None
     images: list[str]
+
+
+class ItemTelegramResponse(ItemResponse):
+    telegram: str
