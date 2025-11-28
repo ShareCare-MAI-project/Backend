@@ -15,3 +15,4 @@ class Request(BaseModel):
 class RequestResponse(Request):
     id: UUID7
     user_id: UUID7
+    organization_name: str | None

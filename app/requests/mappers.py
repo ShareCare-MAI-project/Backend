@@ -23,14 +23,15 @@ def Requests_to_RequestBase(request: Request,
 
 
 # noinspection PyPep8Naming
-def RequestBase_to_RequestResponse(request_base: RequestBase) -> RequestResponse:
+def RequestBase_to_RequestResponse(request_base: RequestBase, organization_name: str | None) -> RequestResponse:
     return RequestResponse(
         id=request_base.id,
         user_id=request_base.user_id,
         text=request_base.text,
         location=request_base.location,
         category=request_base.category,
-        delivery_types=deliveries_bases_to_deliveries(request_base.request_delivery_bases)
+        delivery_types=deliveries_bases_to_deliveries(request_base.request_delivery_bases),
+        organization_name=organization_name
     )
 
 
