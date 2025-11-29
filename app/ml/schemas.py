@@ -12,4 +12,4 @@ class AnalysisResponse(BaseModel):
 
 class AnalysisRequest(BaseModel):
     """Запрос для анализа фото"""
-    image_url: str  # URL картинки
+    image_url: str  

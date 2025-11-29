@@ -4,6 +4,7 @@ from app.ml.schemas import AnalysisRequest, AnalysisResponse
 from app.ml.service import ml_service
 from app.core.database import get_async_db
 from app.items.schemas import Item
+from sqlalchemy import select
 
 router = APIRouter(prefix="/ml", tags=["ML"])
 
@@ -29,9 +30,9 @@ async def analyze_and_fill_item(
 ) -> AnalysisResponse:
     
     if not ml_service:
-        raise HTTPException(status_code=503, detail="ML сервис недоступен")
+        raise HTTPException(status_code=503, detail="ML сервис не работает")
     
-    item = db.query(Item).filter(Item.id == item_id).first()
+    item = (await db.execute(select(Item).where(Item.id == item_id))).scalars().first()   
     if not item:
         raise HTTPException(status_code=404, detail=f"Товар с ID {item_id} не найден")
     
@@ -60,43 +61,10 @@ async def analyze_and_fill_item(
     )
 
 
-@router.post("/analyze-item-force/{item_id}", response_model=AnalysisResponse)
-async def analyze_and_overwrite_item(
-    item_id: str,
-    request: AnalysisRequest,
-    db: Session = Depends(get_async_db)
-) -> AnalysisResponse:
-    if not ml_service:
-        raise HTTPException(status_code=503, detail="ML сервис недоступен")
-    
-    item = db.query(Item).filter(Item.id == item_id).first()
-    if not item:
-        raise HTTPException(status_code=404, detail=f"Товар с ID {item_id} не найден")
-    
-    result = await ml_service.analyze(request.image_url)
-    
-    if result.error:
-        raise HTTPException(status_code=400, detail=f"Ошибка анализа: {result.error}")
-    
-    item.name = result.name
-    item.description = result.description
-    item.category = result.category
-    
-    db.commit()
-    db.refresh(item)
-    
-    return AnalysisResponse(
-        name=result.name,
-        description=result.description,
-        category=result.category,
-        error=None
-    )
-
-
 @router.get("/health")
 async def health():
     """проверка, работает ли ml"""
     if not ml_service:
         raise HTTPException(status_code=503)
     
-    return {"status": "ok", "model": "prime-intellect/intellect-3"}
+    return {"status": "ok"}
