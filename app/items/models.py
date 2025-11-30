@@ -26,7 +26,7 @@ class ItemBase(Base):
     status: Mapped[ItemStatus] = mapped_column(Enum(ItemStatus, name="item_status"), nullable=False,
                                                default=ItemStatus.listed)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
-    edited_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=lambda: datetime.now(UTC))
+    edited_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     image_bases: Mapped[list['ItemImageBase']] = relationship(
         "ItemImageBase",

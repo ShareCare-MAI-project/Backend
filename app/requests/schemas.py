@@ -1,13 +1,10 @@
-from typing import Optional
-
 from pydantic import BaseModel, UUID7
 
 from app.items.enums import ItemCategory, ItemDelivery
 
 
-class Item(BaseModel):
-    title: str
-    description: str
+class Request(BaseModel):
+    text: str
     location: str
     # latitude: Optional[str]
     # longitude: Optional[str]
@@ -15,12 +12,7 @@ class Item(BaseModel):
     delivery_types: list[ItemDelivery]
 
 
-class ItemResponse(Item):
+class RequestResponse(Request):
     id: UUID7
-    owner: UUID7
-    recipient: Optional[UUID7] = None
-    images: list[str]
-
-
-class ItemTelegramResponse(ItemResponse):
-    telegram: str
+    user_id: UUID7
+    organization_name: str | None

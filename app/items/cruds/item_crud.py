@@ -1,9 +1,9 @@
 import uuid
 from typing import Optional, List
 
-from sqlalchemy import select
+from sqlalchemy import select, ColumnElement
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import selectinload, Mapped
 
 from app.items.models import ItemBase
 
@@ -27,6 +27,17 @@ class ItemCrud:
             selectinload(ItemBase.image_bases),
             selectinload(ItemBase.item_delivery_bases)
         )
+        return list((await db.scalars(stmt)).all())
+
+    @staticmethod
+    async def get_filtered_items(db: AsyncSession, where: ColumnElement[bool]) -> List[ItemBase]:
+        stmt = select(ItemBase).where(where).options(
+            selectinload(ItemBase.image_bases),
+            selectinload(ItemBase.item_delivery_bases)
+        ).order_by(
+            ItemBase.edited_at.desc()
+        )
+
         return list((await db.scalars(stmt)).all())
 
     # @staticmethod

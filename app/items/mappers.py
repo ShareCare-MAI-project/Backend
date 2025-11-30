@@ -1,25 +1,40 @@
 import uuid
 
-from sqlalchemy.orm import Mapped
-
 from app.items.enums import ItemDelivery, ItemStatus
 from app.items.models import ItemBase, ItemImageBase
-from app.items.schemas import ItemResponse, Item
 from app.items.models import ItemDeliveryTypeBase
+from app.items.schemas import ItemResponse, Item
+from app.items.schemas import ItemTelegramResponse
 
 
 # noinspection PyPep8Naming
-def ItemBase_to_ItemResponse(item: ItemBase, delivery_types: list[ItemDelivery], images: list[str]) -> ItemResponse:
+def ItemBase_to_ItemResponse(item: ItemBase) -> ItemResponse:
     return ItemResponse(
         title=item.title,
         description=item.description,
         location=item.location,
         category=item.category,
-        delivery_types=delivery_types,
+        delivery_types=deliveries_bases_to_deliveries(item.item_delivery_bases),
         id=item.id,
         owner=item.owner_id,
         recipient=item.recipient_id,
-        images=images
+        images=image_bases_to_images_links(item.image_bases)
+    )
+
+
+# noinspection PyPep8Naming
+def ItemBase_to_ItemTelegramResponse(item: ItemBase, telegram: str) -> ItemTelegramResponse:
+    return ItemTelegramResponse(
+        title=item.title,
+        description=item.description,
+        location=item.location,
+        category=item.category,
+        delivery_types=deliveries_bases_to_deliveries(item.item_delivery_bases),
+        id=item.id,
+        owner=item.owner_id,
+        recipient=item.recipient_id,
+        images=image_bases_to_images_links(item.image_bases),
+        telegram=telegram
     )
 
 
@@ -55,9 +70,9 @@ def ItemDelivery_to_ItemDeliveryTypeBase(
     )
 
 
-def image_bases_to_images_links(image_bases: Mapped[list[ItemImageBase]]) -> list[str]:
+def image_bases_to_images_links(image_bases: list[ItemImageBase]) -> list[str]:
     return [image_base.image for image_base in image_bases]
 
 
-def deliveries_bases_to_deliveries(delivery_bases: Mapped[list[ItemDeliveryTypeBase]]) -> list[ItemDelivery]:
+def deliveries_bases_to_deliveries(delivery_bases: list[ItemDeliveryTypeBase]) -> list[ItemDelivery]:
     return [item_base.delivery_type for item_base in delivery_bases]
