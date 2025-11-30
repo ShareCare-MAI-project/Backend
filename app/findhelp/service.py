@@ -1,17 +1,21 @@
 import uuid
 
+from sqlalchemy import func, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.common.schemas import SearchRequest
 from app.findhelp.schemas import FindHelpBasicResponse
 from app.items.cruds.item_crud import ItemCrud
 from app.items.enums import ItemStatus
-from app.items.models import ItemBase
+from app.items.mappers import ItemBase_to_ItemTelegramResponse, item_bases_to_item_responses
+from app.items.models import ItemBase, ItemDeliveryTypeBase
 from app.requests.cruds.request_crud import RequestCrud
-from app.requests.models import RequestBase
-from app.items.mappers import ItemBase_to_ItemTelegramResponse
-from app.utils.funcs.get_user_telegram import get_user_telegram
 from app.requests.mappers import RequestBase_to_RequestResponse
+from app.requests.models import RequestBase
 from app.utils.funcs.get_organization_name import get_organization_name
+from app.utils.funcs.get_user_telegram import get_user_telegram
+from app.utils.funcs.search_init_statement import search_init_statement
+from app.items.schemas import ItemResponse
 
 
 class FindHelpService:
@@ -35,3 +39,41 @@ class FindHelpService:
             my_requests=[RequestBase_to_RequestResponse(request, organization_name=organization_name) for request in
                          await my_requests]
         )
+
+    @staticmethod
+    async def search_items(
+            db: AsyncSession,
+            request: SearchRequest
+    ) -> list[ItemResponse]:
+        # https://habr.com/ru/companies/beeline_cloud/articles/742214/?ysclid=milavy3vv3200505062
+        stmt = search_init_statement(base=ItemBase, delivery_base=ItemDeliveryTypeBase, category=request.category,
+                                     delivery_types=request.delivery_types)
+        query = request.query
+        if query and query.strip():
+            stmt = stmt.where(
+                or_(
+                    func.similarity(ItemBase.title, query) > 0.1,
+                    func.similarity(ItemBase.description, query) > 0.1
+                )
+            ).order_by(
+                (
+                        func.similarity(ItemBase.title, query) * 2 +
+                        func.similarity(ItemBase.description, query) * 1
+                ).desc()
+            )
+        else:
+            stmt = stmt.order_by(ItemBase.edited_at.desc())
+
+        stmt = stmt.offset(request.offset).limit(request.to_load)
+
+        result = await db.scalars(stmt)
+        return item_bases_to_item_responses(list(result.all()))
+
+        # if query and query.strip():
+        #     stmt = stmt.where(
+        #         func.similarity(RequestBase.text, query) > 0.1
+        #     ).order_by(
+        #         func.similarity(RequestBase.text, query).desc()
+        #     )
+        # else:
+        #     stmt = stmt.order_by(RequestBase.edited_at.desc())

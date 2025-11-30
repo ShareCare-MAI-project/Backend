@@ -33,7 +33,7 @@ class ItemBase(Base):
         cascade="all, delete-orphan"
     )
 
-    item_delivery_bases: Mapped[list['ItemDeliveryTypeBase']] = relationship(
+    delivery_bases: Mapped[list['ItemDeliveryTypeBase']] = relationship(
         "ItemDeliveryTypeBase",
         cascade="all, delete-orphan"
     )

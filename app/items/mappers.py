@@ -14,7 +14,7 @@ def ItemBase_to_ItemResponse(item: ItemBase) -> ItemResponse:
         description=item.description,
         location=item.location,
         category=item.category,
-        delivery_types=deliveries_bases_to_deliveries(item.item_delivery_bases),
+        delivery_types=deliveries_bases_to_deliveries(item.delivery_bases),
         id=item.id,
         owner=item.owner_id,
         recipient=item.recipient_id,
@@ -29,7 +29,7 @@ def ItemBase_to_ItemTelegramResponse(item: ItemBase, telegram: str) -> ItemTeleg
         description=item.description,
         location=item.location,
         category=item.category,
-        delivery_types=deliveries_bases_to_deliveries(item.item_delivery_bases),
+        delivery_types=deliveries_bases_to_deliveries(item.delivery_bases),
         id=item.id,
         owner=item.owner_id,
         recipient=item.recipient_id,
@@ -68,6 +68,10 @@ def ItemDelivery_to_ItemDeliveryTypeBase(
         item_id=item_id,
         delivery_type=item_delivery
     )
+
+
+def item_bases_to_item_responses(item_bases: list[ItemBase]) -> list[ItemResponse]:
+    return [ItemBase_to_ItemResponse(item_base) for item_base in item_bases]
 
 
 def image_bases_to_images_links(image_bases: list[ItemImageBase]) -> list[str]:

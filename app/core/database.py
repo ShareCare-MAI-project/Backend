@@ -1,8 +1,8 @@
 from typing import AsyncGenerator
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
-from sqlalchemy.orm import DeclarativeBase, Session
+from sqlalchemy.orm import DeclarativeBase, Session, MappedAsDataclass, sessionmaker
 from sqlalchemy_utils import database_exists, create_database
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -25,13 +25,21 @@ def create_db_and_tables() -> None:
     Base.metadata.create_all(sync_engine)
 
 
+def create_extensions() -> None:
+    with sync_engine.connect() as conn:
+        conn.execute(text('CREATE EXTENSION IF NOT EXISTS pg_trgm;'))
+        conn.commit()
+
+
 def setup_db() -> None:
     if not database_exists(sync_engine.url):
         create_database(sync_engine.url)
+    create_extensions()
     create_db_and_tables()
 
 
 async_session = async_sessionmaker(async_engine, expire_on_commit=False)
+sync_session = sessionmaker(sync_engine, expire_on_commit=False)
 
 
 async def get_async_db() -> AsyncGenerator[AsyncSession, None]:

@@ -13,7 +13,7 @@ class RequestCrud:
     @staticmethod
     async def get_filtered_requests(db: AsyncSession, where: ColumnElement[bool]) -> list[RequestBase]:
         stmt = select(RequestBase).where(where).options(
-            selectinload(RequestBase.request_delivery_bases)
+            selectinload(RequestBase.delivery_bases)
         ).order_by(
             RequestBase.edited_at.desc()
         )
