@@ -1,70 +1,34 @@
-from fastapi import APIRouter, HTTPException, Depends
-from sqlalchemy.orm import Session
-from app.ml.schemas import AnalysisRequest, AnalysisResponse
+from fastapi import APIRouter, HTTPException, UploadFile, File
+
+from app.ml.schemas import AnalysisResponse
 from app.ml.service import ml_service
-from app.core.database import get_async_db
-from app.items.schemas import Item
-from sqlalchemy import select
 
 router = APIRouter(prefix="/ml", tags=["ML"])
 
 
-@router.post("/analyze", response_model=AnalysisResponse)
-async def analyze_item(request: AnalysisRequest) -> AnalysisResponse:
-    
+@router.post("/analyze-images", response_model=AnalysisResponse)
+async def analyze_images(images: list[UploadFile] = File(...)) -> AnalysisResponse:
     if not ml_service:
-        raise HTTPException(
-            status_code=503,
-            detail="ml не работает"
-        )
+        raise HTTPException(status_code=503, detail="ML сервис недоступен")
     
-    result = await ml_service.analyze(request.image_url)
-    return result
-
-
-@router.post("/analyze-item/{item_id}", response_model=AnalysisResponse)
-async def analyze_and_fill_item(
-    item_id: str,
-    request: AnalysisRequest,
-    db: Session = Depends(get_async_db)
-) -> AnalysisResponse:
+    import base64
     
-    if not ml_service:
-        raise HTTPException(status_code=503, detail="ML сервис не работает")
+    base64_images = []
+    for image in images:
+        contents = await image.read()
+        base64_data = base64.b64encode(contents).decode("utf-8")
+        base64_images.append(base64_data)
     
-    item = (await db.execute(select(Item).where(Item.id == item_id))).scalars().first()   
-    if not item:
-        raise HTTPException(status_code=404, detail=f"Товар с ID {item_id} не найден")
-    
-    result = await ml_service.analyze(request.image_url)
-    
-    if result.error:
-        raise HTTPException(status_code=400, detail=f"Ошибка анализа: {result.error}")
-    
-    if not item.name or item.name.strip() == "":
-        item.name = result.name
-    
-    if not item.description or item.description.strip() == "":
-        item.description = result.description
-    
-    if not item.category or item.category.strip() == "":
-        item.category = result.category
-    
-    db.commit()
-    db.refresh(item)
-    
-    return AnalysisResponse(
-        name=result.name,
-        description=result.description,
-        category=result.category,
-        error=None
-    )
+    try:
+        result = await ml_service.analyze_multiple_base64(base64_images)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.get("/health")
 async def health():
-    """проверка, работает ли ml"""
+    """Проверка статуса ML сервиса"""
     if not ml_service:
-        raise HTTPException(status_code=503)
-    
+        raise HTTPException(status_code=503, detail="ML сервис недоступен")
     return {"status": "ok"}
