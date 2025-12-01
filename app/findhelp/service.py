@@ -1,7 +1,9 @@
 import uuid
 
+from fastapi import HTTPException
 from sqlalchemy import func, or_
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette import status
 
 from app.common.schemas import SearchRequest
 from app.findhelp.schemas import FindHelpBasicResponse
@@ -16,17 +18,33 @@ from app.utils.funcs.get_organization_name import get_organization_name
 from app.utils.funcs.get_user_telegram import get_user_telegram
 from app.utils.funcs.search_init_statement import search_init_statement
 from app.items.schemas import ItemResponse
+from app.findhelp.schemas import TakeItemResponse
 
 
 class FindHelpService:
     @staticmethod
+    async def take_item(db: AsyncSession, user_id: uuid.UUID, item_id: uuid.UUID) -> TakeItemResponse:
+        item = await ItemCrud.get_item(db, item_id)
+        if item.status == ItemStatus.listed:
+            item.status = ItemStatus.chosen
+            item.recipient_id = user_id
+
+            telegram = get_user_telegram(db, item.owner_id)
+            await ItemCrud.update_item(db, new_item=item)
+            await db.flush(item)
+            await db.commit()
+            return TakeItemResponse(telegram=await telegram)
+        else:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Предмет уже взяли 0_о")
+
+    @staticmethod
     async def get_findhelp_basic_items(db: AsyncSession, user_id: uuid.UUID) -> FindHelpBasicResponse:
-        ready_to_help = ItemCrud.get_filtered_items(db, where=(
-                ItemBase.status == ItemStatus.chosen and ItemBase.recipient_id == user_id
+        ready_to_help = ItemCrud.get_filtered_items(db, (
+                (ItemBase.status == ItemStatus.chosen) & (ItemBase.recipient_id == user_id)
         ))
 
-        my_requests = RequestCrud.get_filtered_requests(db, where=(
-                RequestBase.status == ItemStatus.listed and RequestBase.user_id == user_id
+        my_requests = RequestCrud.get_filtered_requests(db, (
+                (RequestBase.status == ItemStatus.listed) & (RequestBase.user_id == user_id)
         ))
 
         organization_name = await get_organization_name(db, user_id)

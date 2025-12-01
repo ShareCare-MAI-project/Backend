@@ -1,9 +1,10 @@
 import uuid
 from typing import Optional, List
 
-from sqlalchemy import select, ColumnElement
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload, Mapped
+from sqlalchemy.orm import selectinload
+from sqlalchemy.sql._typing import _ColumnExpressionArgument
 
 from app.items.models import ItemBase
 
@@ -30,8 +31,8 @@ class ItemCrud:
         return list((await db.scalars(stmt)).all())
 
     @staticmethod
-    async def get_filtered_items(db: AsyncSession, where: ColumnElement[bool]) -> List[ItemBase]:
-        stmt = select(ItemBase).where(where).options(
+    async def get_filtered_items(db: AsyncSession, *whereclause: _ColumnExpressionArgument[bool]) -> List[ItemBase]:
+        stmt = select(ItemBase).where(*whereclause).options(
             selectinload(ItemBase.image_bases),
             selectinload(ItemBase.delivery_bases)
         ).order_by(
@@ -39,6 +40,10 @@ class ItemCrud:
         )
 
         return list((await db.scalars(stmt)).all())
+
+    @staticmethod
+    async def update_item(db: AsyncSession, new_item: ItemBase):
+        await db.merge(new_item)
 
     # @staticmethod
     # async def update_item(db: AsyncSession, item_id: UUID, item: ItemBase) -> Optional[ItemBase]:

@@ -1,6 +1,7 @@
-from sqlalchemy import ColumnElement, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+from sqlalchemy.sql._typing import _ColumnExpressionArgument
 
 from app.requests.models import RequestBase
 
@@ -11,8 +12,8 @@ class RequestCrud:
         db.add(request)
 
     @staticmethod
-    async def get_filtered_requests(db: AsyncSession, where: ColumnElement[bool]) -> list[RequestBase]:
-        stmt = select(RequestBase).where(where).options(
+    async def get_filtered_requests(db: AsyncSession, *whereclause: _ColumnExpressionArgument[bool]) -> list[RequestBase]:
+        stmt = select(RequestBase).where(*whereclause).options(
             selectinload(RequestBase.delivery_bases)
         ).order_by(
             RequestBase.edited_at.desc()
