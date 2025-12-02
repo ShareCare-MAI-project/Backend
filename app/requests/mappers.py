@@ -48,5 +48,9 @@ def RequestDelivery_to_RequestDeliveryTypeBase(
     )
 
 
+def request_bases_to_request_responses(request_bases: list[RequestBase], organization_name: str | None) -> list[RequestResponse]:
+    return [RequestBase_to_RequestResponse(request_base, organization_name=organization_name) for request_base in request_bases]
+
+
 def deliveries_bases_to_deliveries(delivery_bases: list[RequestDeliveryTypeBase]) -> list[ItemDelivery]:
     return [request_base.delivery_type for request_base in delivery_bases]
