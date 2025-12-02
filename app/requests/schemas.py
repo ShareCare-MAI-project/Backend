@@ -1,3 +1,5 @@
+import uuid
+
 from pydantic import BaseModel, UUID7
 
 from app.items.enums import ItemCategory, ItemDelivery
@@ -10,6 +12,10 @@ class Request(BaseModel):
     # longitude: Optional[str]
     category: ItemCategory
     delivery_types: list[ItemDelivery]
+
+
+class RequestWithId(Request):
+    id: uuid.UUID
 
 
 class RequestResponse(Request):

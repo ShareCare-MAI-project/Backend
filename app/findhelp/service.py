@@ -79,8 +79,6 @@ class FindHelpService:
                         func.similarity(ItemBase.description, query) * 1
                 ).desc()
             )
-        else:
-            stmt = stmt.order_by(ItemBase.edited_at.desc())
 
         stmt = stmt.offset(request.offset).limit(request.to_load)
 
