@@ -15,7 +15,5 @@ class RequestCrud:
     async def get_filtered_requests(db: AsyncSession, *whereclause: _ColumnExpressionArgument[bool]) -> list[RequestBase]:
         stmt = select(RequestBase).where(*whereclause).options(
             selectinload(RequestBase.delivery_bases)
-        ).order_by(
-            RequestBase.edited_at.desc()
         )
         return list((await db.scalars(stmt)).all())
