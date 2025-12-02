@@ -35,7 +35,7 @@ class ItemCrud:
         stmt = select(ItemBase).where(*whereclause).options(
             selectinload(ItemBase.image_bases),
             selectinload(ItemBase.delivery_bases)
-        )
+        ).order_by(ItemBase.edited_at.desc())
 
         return list((await db.scalars(stmt)).all())
 
