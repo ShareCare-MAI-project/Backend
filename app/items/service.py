@@ -5,6 +5,7 @@ from uuid import UUID
 import uuid_utils
 from fastapi import UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette import status
 from starlette.exceptions import HTTPException
 from starlette.status import HTTP_404_NOT_FOUND
 
@@ -16,9 +17,29 @@ from app.utils.consts import SUCCESS_RESPONSE
 from app.items.cruds.item_image_crud import ItemImageCrud
 from app.items.models import ItemImageBase
 from app.items.cruds.item_delivery_crud import ItemDeliveryCrud
+from app.items.enums import ItemStatus
 
 
 class ItemsService:
+    @staticmethod
+    async def deny_item(db: AsyncSession, item_id: uuid.UUID, user_id: uuid.UUID):
+        item = await ItemCrud.get_item(db, item_id)
+
+        if user_id not in [item.recipient_id, item.owner_id]:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Вы не можете отменить")
+
+        if item.status == ItemStatus.chosen:
+            item.status = ItemStatus.listed
+            item.recipient_id = None
+
+            await ItemCrud.update_item(db, new_item=item)
+            await db.flush(item)
+            await db.commit()
+            return SUCCESS_RESPONSE
+        else:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Невозможно отменить")
+
+
     @staticmethod
     async def get_item(db: AsyncSession, item_id: UUID) -> ItemResponse:
         item = await ItemCrud.get_item(db, item_id)

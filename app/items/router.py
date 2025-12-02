@@ -1,4 +1,5 @@
 import json
+import uuid
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, status, Form, UploadFile, File
@@ -48,6 +49,16 @@ async def get_item(
         _=Depends(require_auth)
 ):
     return await ItemsService.get_item(db, item_id)
+
+
+@router.patch("/deny/{item_id}")
+@handle_errors()
+async def deny_item(
+        item_id: uuid.UUID,
+        db: AsyncSession = Depends(get_async_db),
+        user: UserBase = Depends(get_current_user)
+):
+    return await ItemsService.deny_item(db, user_id=user.id, item_id=item_id)
 
 # @router.delete("/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
 # @handle_errors()

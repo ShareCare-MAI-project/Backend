@@ -30,7 +30,7 @@ def RequestBase_to_RequestResponse(request_base: RequestBase, organization_name:
         text=request_base.text,
         location=request_base.location,
         category=request_base.category,
-        delivery_types=deliveries_bases_to_deliveries(request_base.request_delivery_bases),
+        delivery_types=deliveries_bases_to_deliveries(request_base.delivery_bases),
         organization_name=organization_name
     )
 
@@ -46,6 +46,7 @@ def RequestDelivery_to_RequestDeliveryTypeBase(
         request_id=request_id,
         delivery_type=delivery
     )
+
 
 def deliveries_bases_to_deliveries(delivery_bases: list[RequestDeliveryTypeBase]) -> list[ItemDelivery]:
     return [request_base.delivery_type for request_base in delivery_bases]

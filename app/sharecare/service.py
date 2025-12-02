@@ -14,12 +14,13 @@ from app.utils.funcs.get_user_telegram import get_user_telegram
 class ShareCareService:
     @staticmethod
     async def get_sharecare_items(db: AsyncSession, user_id: uuid.UUID) -> ShareCareItemsResponse:
-        responses = ItemCrud.get_filtered_items(db, where=(
-                ItemBase.status == ItemStatus.chosen and ItemBase.owner_id == user_id))
+        responses = ItemCrud.get_filtered_items(db,
+                (ItemBase.status == ItemStatus.chosen),  (ItemBase.owner_id == user_id)
+        )
 
-        my_published_items = ItemCrud.get_filtered_items(db, where=(
-                ItemBase.status == ItemStatus.listed and ItemBase.owner_id == user_id
-        ))
+        my_published_items = ItemCrud.get_filtered_items(db,
+                (ItemBase.status == ItemStatus.listed), (ItemBase.owner_id == user_id)
+        )
 
         return ShareCareItemsResponse(
             responses=[ItemBase_to_ItemTelegramResponse(

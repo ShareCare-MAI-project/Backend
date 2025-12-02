@@ -24,7 +24,7 @@ class RequestBase(Base):
     edited_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC),
                                                           onupdate=lambda: datetime.now(UTC))
 
-    request_delivery_bases: Mapped[list['RequestDeliveryTypeBase']] = relationship(
+    delivery_bases: Mapped[list['RequestDeliveryTypeBase']] = relationship(
         "RequestDeliveryTypeBase",
         cascade="all, delete-orphan"
     )
