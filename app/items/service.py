@@ -3,14 +3,14 @@ from pathlib import Path
 from uuid import UUID
 
 import uuid_utils
-from fastapi import UploadFile
+from fastapi import UploadFile, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
-from starlette.exceptions import HTTPException
-from starlette.status import HTTP_404_NOT_FOUND
+from starlette.status import HTTP_404_NOT_FOUND, HTTP_409_CONFLICT
+from urllib3 import request
 
 from app.items.cruds.item_crud import ItemCrud
-from app.items.mappers import ItemBase_to_ItemResponse, Item_to_ItemBase, deliveries_bases_to_deliveries, \
+from app.items.mappers import ItemBase_to_ItemResponse, ItemRequest_to_ItemBase, deliveries_bases_to_deliveries, \
     image_bases_to_images_links, ItemDelivery_to_ItemDeliveryTypeBase
 from app.items.schemas import ItemResponse, Item
 from app.utils.consts import SUCCESS_RESPONSE
@@ -18,6 +18,8 @@ from app.items.cruds.item_image_crud import ItemImageCrud
 from app.items.models import ItemImageBase
 from app.items.cruds.item_delivery_crud import ItemDeliveryCrud
 from app.items.enums import ItemStatus
+from app.items.schemas import ItemCreateRequest
+from app.requests.cruds.request_crud import RequestCrud
 
 
 class ItemsService:
@@ -39,7 +41,6 @@ class ItemsService:
         else:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Невозможно отменить")
 
-
     @staticmethod
     async def get_item(db: AsyncSession, item_id: UUID) -> ItemResponse:
         item = await ItemCrud.get_item(db, item_id)
@@ -58,8 +59,17 @@ class ItemsService:
         ))
 
     @staticmethod
-    async def create_item(db: AsyncSession, item: Item, images: list[UploadFile], owner_id: uuid.UUID):
-        item_base = Item_to_ItemBase(item=item, owner_id=owner_id)
+    async def create_item(db: AsyncSession, item: ItemCreateRequest, images: list[UploadFile], owner_id: uuid.UUID):
+        request_base = await RequestCrud.get_request(db, item.request_id) if item.request_id is not None else None
+
+        if request_base and request_base.status != ItemStatus.listed:
+            raise HTTPException(status_code=HTTP_409_CONFLICT, detail="На заявку уже откликнулись!")
+
+        recipient_id = request_base.user_id if request_base is not None else None
+
+        item_status = ItemStatus.chosen if recipient_id else ItemStatus.listed
+
+        item_base = ItemRequest_to_ItemBase(item=item, owner_id=owner_id, recipient_id=recipient_id, status=item_status)
 
         images_links = [await i for i in [ItemsService.save_image(images) for images in images]]
 
@@ -80,8 +90,12 @@ class ItemsService:
         for i in to_await:
             await i
 
+        if request_base:
+            request_base.status = ItemStatus.chosen
+
         await db.commit()
         await db.refresh(item_base)
+        await db.refresh(request_base)
 
         return SUCCESS_RESPONSE
 

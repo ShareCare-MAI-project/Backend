@@ -12,6 +12,7 @@ from app.user.user_base import UserBase
 from app.utils.decorators.handle_errors import handle_errors
 from app.utils.di.get_current_user import get_current_user
 from app.utils.di.require_auth import require_auth
+from app.items.schemas import ItemCreateRequest
 
 router = APIRouter()
 
@@ -35,7 +36,7 @@ async def create_item(
         # _=Depends(require_auth) Не нужно, т.к. выше мы получаем пользователя
 ):
     item_dict = json.loads(item_data)
-    item = Item(**item_dict)
+    item = ItemCreateRequest(**item_dict)
     return await ItemsService.create_item(
         db, item=item, images=images, owner_id=user.id
     )

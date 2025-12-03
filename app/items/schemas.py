@@ -15,6 +15,10 @@ class Item(BaseModel):
     delivery_types: list[ItemDelivery]
 
 
+class ItemCreateRequest(Item):
+    request_id: Optional[UUID7 | None]
+
+
 class ItemResponse(Item):
     id: UUID7
     owner: UUID7
