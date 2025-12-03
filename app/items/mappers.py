@@ -54,7 +54,8 @@ def ItemRequest_to_ItemBase(item: ItemCreateRequest,
         description=item.description,
         location=item.location,
         category=item.category,
-        status=status
+        status=status,
+        request_id=item.request_id
     )
 
 

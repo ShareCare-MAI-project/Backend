@@ -17,6 +17,8 @@ class ItemBase(Base):
     owner_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     recipient_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID, ForeignKey("users.id", ondelete="CASCADE"),
                                                               nullable=True)
+    request_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID, ForeignKey("requests.id", ondelete="CASCADE"),
+                                                            nullable=True)
     title: Mapped[str] = mapped_column(String, nullable=False)
     description: Mapped[str] = mapped_column(Text)
     location: Mapped[str] = mapped_column(String)
@@ -26,7 +28,8 @@ class ItemBase(Base):
     status: Mapped[ItemStatus] = mapped_column(Enum(ItemStatus, name="item_status"), nullable=False,
                                                default=ItemStatus.listed)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
-    edited_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
+    edited_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC),
+                                                          onupdate=lambda: datetime.now(UTC))
 
     image_bases: Mapped[list['ItemImageBase']] = relationship(
         "ItemImageBase",
