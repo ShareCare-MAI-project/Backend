@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, status, Form, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_async_db
-from app.items.schemas import ItemCreateRequest
+from app.items.schemas import ItemCreateRequest, Item
 from app.items.schemas import ItemResponse
 from app.items.service import ItemsService
 from app.user.user_base import UserBase
@@ -44,12 +44,23 @@ async def create_item(
 
 @router.delete("/", status_code=status.HTTP_200_OK)
 @handle_errors()
-async def delete_request(
+async def delete_item(
         item_id: uuid.UUID,
         db: AsyncSession = Depends(get_async_db),
         user: UserBase = Depends(get_current_user)
 ):
     return await ItemsService.delete_item(db, item_id=item_id, user_id=user.id)
+
+
+@router.patch("/", status_code=status.HTTP_200_OK)
+@handle_errors()
+async def edit_item(
+        item: Item,
+        item_id: uuid.UUID,
+        db: AsyncSession = Depends(get_async_db),
+        user: UserBase = Depends(get_current_user)
+):
+    return await ItemsService.edit_item(db, item=item, item_id=item_id, user_id=user.id)
 
 
 @router.get("/{item_id}", response_model=ItemResponse)

@@ -37,15 +37,18 @@ class ItemsService:
 
         if request_base:
             request_base.status = ItemStatus.listed
-
         item.status = ItemStatus.listed
         item.recipient_id = None
         item.request_id = None
 
         await ItemCrud.update_item(db, new_item=item)
-        await db.refresh(request_base)
-        await db.flush(item)
+
         await db.commit()
+
+        if request_base:
+            await db.refresh(request_base)
+
+        await db.flush(item)
         return SUCCESS_RESPONSE
 
     @staticmethod
@@ -102,7 +105,9 @@ class ItemsService:
 
         await db.commit()
         await db.refresh(item_base)
-        await db.refresh(request_base)
+
+        if request_base:
+            await db.refresh(request_base)
 
         return SUCCESS_RESPONSE
 
@@ -125,6 +130,37 @@ class ItemsService:
             await i
 
         await db.commit()
+
+    @staticmethod
+    async def edit_item(db: AsyncSession, item: Item, item_id: uuid.UUID, user_id: uuid.UUID):
+        item_base = await ItemCrud.get_item(db, item_id=item_id)
+
+        if user_id != item_base.owner_id:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Нет прав")
+
+        # is there better way?
+        item_base.title = item.title
+        item_base.description = item.description
+        item_base.category = item.category
+        item_base.location = item.location
+
+        await db.merge(item_base)
+
+        await ItemDeliveryCrud.delete(db, item_id=item_id)
+        await db.flush()
+
+        to_await = []
+        for delivery_type in item.delivery_types:
+            job = ItemDeliveryCrud.create(db, ItemDelivery_to_ItemDeliveryTypeBase(item_delivery=delivery_type,
+                                                                                   item_id=item_id))
+            to_await.append(job)
+
+        for i in to_await:
+            await i
+
+        await db.commit()
+        await db.refresh(item_base)
+        return SUCCESS_RESPONSE
 
     @staticmethod
     async def delete_image(image: Path):
