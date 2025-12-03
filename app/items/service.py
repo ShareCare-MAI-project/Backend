@@ -107,6 +107,30 @@ class ItemsService:
         return SUCCESS_RESPONSE
 
     @staticmethod
+    async def delete_item(db: AsyncSession, item_id: uuid.UUID, user_id: uuid.UUID):
+
+        item_base = await ItemCrud.get_item(db, item_id=item_id)
+
+        if user_id != item_base.owner_id:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Нет прав")
+
+        await db.delete(item_base)
+        await ItemDeliveryCrud.delete(db, item_id=item_id)
+        await ItemImageCrud.delete(db, item_id=item_id)
+        jobs = []
+        for image_base in item_base.image_bases:
+            jobs.append(ItemsService.delete_image(Path(image_base.image)))
+
+        for i in jobs:
+            await i
+
+        await db.commit()
+
+    @staticmethod
+    async def delete_image(image: Path):
+        print(image.exists())
+
+    @staticmethod
     async def save_image(image: UploadFile) -> tuple[UUID, str] | None:
         if not image.content_type.startswith('image/'):
             raise HTTPException(
@@ -131,6 +155,6 @@ class ItemsService:
                 detail=f"Could not save image: {str(e)}"
             )
         finally:
-            await image.seek(0)  # Сбрасываем позицию чтения файла
+            await image.seek(0)
 
         return image_id, str(file_path)

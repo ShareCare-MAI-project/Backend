@@ -6,13 +6,13 @@ from fastapi import APIRouter, Depends, status, Form, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_async_db
-from app.items.schemas import ItemResponse, Item
+from app.items.schemas import ItemCreateRequest
+from app.items.schemas import ItemResponse
 from app.items.service import ItemsService
 from app.user.user_base import UserBase
 from app.utils.decorators.handle_errors import handle_errors
 from app.utils.di.get_current_user import get_current_user
 from app.utils.di.require_auth import require_auth
-from app.items.schemas import ItemCreateRequest
 
 router = APIRouter()
 
@@ -40,6 +40,16 @@ async def create_item(
     return await ItemsService.create_item(
         db, item=item, images=images, owner_id=user.id
     )
+
+
+@router.delete("/", status_code=status.HTTP_200_OK)
+@handle_errors()
+async def delete_request(
+        item_id: uuid.UUID,
+        db: AsyncSession = Depends(get_async_db),
+        user: UserBase = Depends(get_current_user)
+):
+    return await ItemsService.delete_item(db, item_id=item_id, user_id=user.id)
 
 
 @router.get("/{item_id}", response_model=ItemResponse)
