@@ -15,6 +15,7 @@ from app.requests.models import RequestDeliveryTypeBase, RequestBase
 from app.requests.schemas import RequestResponse
 from app.utils.funcs.search_init_statement import search_init_statement
 from app.requests.mappers import request_bases_to_request_responses
+from app.items.service import ItemsService
 
 
 class ShareCareService:
@@ -33,7 +34,7 @@ class ShareCareService:
             responses=[ItemBase_to_ItemTelegramResponse(
                 telegram=await get_user_telegram(db, response.recipient_id),
                 item=response
-            ) for response in await responses],
+            ) for response in await responses if (user_id not in ItemsService.acceptance.get(response.id, []))],
             my_published_items=list(map(ItemBase_to_ItemResponse, await my_published_items)),
         )
 

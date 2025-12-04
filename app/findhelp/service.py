@@ -19,6 +19,7 @@ from app.utils.funcs.get_user_telegram import get_user_telegram
 from app.utils.funcs.search_init_statement import search_init_statement
 from app.items.schemas import ItemResponse
 from app.findhelp.schemas import TakeItemResponse
+from app.items.service import ItemsService
 
 
 class FindHelpService:
@@ -53,7 +54,7 @@ class FindHelpService:
             ready_to_help=[ItemBase_to_ItemTelegramResponse(
                 telegram=await get_user_telegram(db, response.recipient_id),
                 item=response
-            ) for response in await ready_to_help],
+            ) for response in await ready_to_help if (user_id not in ItemsService.acceptance.get(response.id, []))],
             my_requests=[RequestBase_to_RequestResponse(request, organization_name=organization_name) for request in
                          await my_requests]
         )
