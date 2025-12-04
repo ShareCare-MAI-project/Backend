@@ -24,6 +24,39 @@ from app.items.mappers import ItemBase_to_TransactionResponse
 
 
 class ItemsService:
+    acceptance = dict()
+
+    @staticmethod
+    async def accept_item(db: AsyncSession, item_id: uuid.UUID, user_id: uuid.UUID):
+        item = await ItemCrud.get_item(db, item_id)
+
+        if user_id not in [item.recipient_id, item.owner_id]:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Вы не можете принять")
+
+        if item.status != ItemStatus.chosen:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Невозможно принять")
+
+        acceptance = ItemsService.acceptance.setdefault(item_id, set())
+        acceptance.add(user_id)
+        if len(ItemsService.acceptance[item_id]) > 1:
+            request_base = (await RequestCrud.get_request(db, item.request_id)) if item.request_id else None
+
+            if request_base:
+                request_base.status = ItemStatus.closed
+            item.status = ItemStatus.closed
+
+            await ItemCrud.update_item(db, new_item=item)
+
+            await db.commit()
+
+            if request_base:
+                await db.refresh(request_base)
+
+            await db.flush(item)
+            ItemsService.acceptance.pop(item_id)
+
+        return SUCCESS_RESPONSE
+
     @staticmethod
     async def deny_item(db: AsyncSession, item_id: uuid.UUID, user_id: uuid.UUID):
         item = await ItemCrud.get_item(db, item_id)

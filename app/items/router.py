@@ -74,6 +74,16 @@ async def get_item(
     return await ItemsService.get_item(db, item_id)
 
 
+@router.patch("/accept/{item_id}")
+@handle_errors()
+async def accept_item(
+        item_id: uuid.UUID,
+        db: AsyncSession = Depends(get_async_db),
+        user: UserBase = Depends(get_current_user)
+):
+    return await ItemsService.accept_item(db, user_id=user.id, item_id=item_id)
+
+
 @router.patch("/deny/{item_id}")
 @handle_errors()
 async def deny_item(
