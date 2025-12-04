@@ -28,3 +28,22 @@
    - `docker compose exec -it app sh` – запустить bash на минималках в контейнере с питоном
    - `docker compose exec -it postgres sh` – то же самое, но для контейнера с бд
    - `exit` – выход
+
+
+# Техническая информация
+### Стек:
+- FastApi
+- SQLAlchemy
+- Pydantic
+- PostgreSQL
+- Docker (compose)
+
+### Модули:
+- **Auth**: Авторизация, регистрация пользователей, работа с OTP (OneTimePassword)
+- **Core**: Общий конфиг и настройка БД
+- **Items** и **Requests**: Предметы и запросы (Models, CRUD, Schemas, Mappers) 
+- **ShareCare** и **FindHelp**: Фича-модули из мобилки (Специальные роуты под мобилку и т.п.)
+- **Utils**: Инициализация сервера, Dependencies, Декораторы
+- [**ML**](https://github.com/ShareCare-MAI-project/Backend/tree/fixing/ml-module): Пока не смёржен
+
+>WIP: Расписать про дб
