@@ -6,6 +6,8 @@ from app.items.models import ItemDeliveryTypeBase
 from app.items.schemas import ItemResponse, Item
 from app.items.schemas import ItemTelegramResponse
 from app.items.schemas import ItemCreateRequest
+from app.items.schemas import TransactionResponse
+from app.utils.funcs.datetime_to_str_date import datetime_to_str_date
 
 
 # noinspection PyPep8Naming
@@ -69,6 +71,21 @@ def ItemDelivery_to_ItemDeliveryTypeBase(
         id=id,
         item_id=item_id,
         delivery_type=item_delivery
+    )
+
+
+# noinspection PyPep8Naming
+def ItemBase_to_TransactionResponse(
+        item_base: ItemBase,
+        user_id: uuid.UUID
+) -> TransactionResponse:
+    return TransactionResponse(
+        item_id=item_base.id,
+        title=item_base.title,
+        description=item_base.description,
+        image_link=item_base.image_bases[0].image,
+        is_recipient=item_base.recipient_id == user_id,
+        date_of_receipt=datetime_to_str_date(item_base.edited_at)
     )
 
 

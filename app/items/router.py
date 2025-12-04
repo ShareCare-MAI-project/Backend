@@ -13,6 +13,7 @@ from app.user.user_base import UserBase
 from app.utils.decorators.handle_errors import handle_errors
 from app.utils.di.get_current_user import get_current_user
 from app.utils.di.require_auth import require_auth
+from app.items.schemas import TransactionResponse
 
 router = APIRouter()
 
@@ -81,6 +82,15 @@ async def deny_item(
         user: UserBase = Depends(get_current_user)
 ):
     return await ItemsService.deny_item(db, user_id=user.id, item_id=item_id)
+
+
+@router.get("/transactions/{user_id}", response_model=list[TransactionResponse])
+@handle_errors()
+async def fetch_transactions(
+        user_id: uuid.UUID,
+        db: AsyncSession = Depends(get_async_db),
+):
+    return await ItemsService.fetch_transactions(db, user_id=user_id)
 
 # @router.delete("/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
 # @handle_errors()
