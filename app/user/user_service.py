@@ -1,10 +1,12 @@
 from fastapi import HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.status import HTTP_400_BAD_REQUEST
 
 from app.auth.utils.otp_manager import OTPManager
 from app.user.user_base import UserBase
 from app.user.user_schemas import UserFullInfoResponse
 from app.auth.utils.phone_number import PhoneNumber
+from app.utils.consts import SUCCESS_RESPONSE
 
 
 class UserService:
@@ -22,3 +24,12 @@ class UserService:
             is_verified=user.is_verified,
             organization_name=user.organization_name
         )
+
+    @staticmethod
+    async def update_verification(db: AsyncSession, user: UserBase, verified: bool, organization_name: str | None):
+        user.is_verified = verified
+        user.organization_name = organization_name
+        await db.merge(user)
+        await db.commit()
+        await db.refresh(user)
+        return SUCCESS_RESPONSE
