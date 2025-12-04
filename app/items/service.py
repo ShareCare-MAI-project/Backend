@@ -4,22 +4,23 @@ from uuid import UUID
 
 import uuid_utils
 from fastapi import UploadFile, HTTPException
+from sqlalchemy import or_, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 from starlette.status import HTTP_404_NOT_FOUND, HTTP_409_CONFLICT
-from urllib3 import request
 
 from app.items.cruds.item_crud import ItemCrud
-from app.items.mappers import ItemBase_to_ItemResponse, ItemRequest_to_ItemBase, deliveries_bases_to_deliveries, \
-    image_bases_to_images_links, ItemDelivery_to_ItemDeliveryTypeBase
-from app.items.schemas import ItemResponse, Item
-from app.utils.consts import SUCCESS_RESPONSE
-from app.items.cruds.item_image_crud import ItemImageCrud
-from app.items.models import ItemImageBase
 from app.items.cruds.item_delivery_crud import ItemDeliveryCrud
+from app.items.cruds.item_image_crud import ItemImageCrud
 from app.items.enums import ItemStatus
+from app.items.mappers import ItemBase_to_ItemResponse, ItemRequest_to_ItemBase, ItemDelivery_to_ItemDeliveryTypeBase
+from app.items.models import ItemImageBase, ItemBase
 from app.items.schemas import ItemCreateRequest
+from app.items.schemas import ItemResponse, Item
+from app.items.schemas import TransactionResponse
 from app.requests.cruds.request_crud import RequestCrud
+from app.utils.consts import SUCCESS_RESPONSE
+from app.items.mappers import ItemBase_to_TransactionResponse
 
 
 class ItemsService:
@@ -163,8 +164,19 @@ class ItemsService:
         return SUCCESS_RESPONSE
 
     @staticmethod
+    async def fetch_transactions(db: AsyncSession, user_id: uuid.UUID) -> list[TransactionResponse]:
+        items = await ItemCrud.get_filtered_items(db,
+                                                  and_(
+                                                      or_(ItemBase.owner_id == user_id,
+                                                          ItemBase.recipient_id == user_id),
+                                                      ItemBase.status == ItemStatus.closed
+                                                  )
+                                                  )
+        return [ItemBase_to_TransactionResponse(item, user_id) for item in items]
+
+    @staticmethod
     async def delete_image(image: Path):
-        print(image.exists())
+        print(image.exists())  # TODO
 
     @staticmethod
     async def save_image(image: UploadFile) -> tuple[UUID, str] | None:

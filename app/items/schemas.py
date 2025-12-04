@@ -28,3 +28,12 @@ class ItemResponse(Item):
 
 class ItemTelegramResponse(ItemResponse):
     telegram: str
+
+
+class TransactionResponse(BaseModel):
+    item_id: UUID7
+    title: str
+    description: str
+    image_link: str
+    is_recipient: bool
+    date_of_receipt: str
