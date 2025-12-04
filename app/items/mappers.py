@@ -5,6 +5,7 @@ from app.items.models import ItemBase, ItemImageBase
 from app.items.models import ItemDeliveryTypeBase
 from app.items.schemas import ItemResponse, Item
 from app.items.schemas import ItemTelegramResponse
+from app.items.schemas import ItemCreateRequest
 
 
 # noinspection PyPep8Naming
@@ -39,12 +40,12 @@ def ItemBase_to_ItemTelegramResponse(item: ItemBase, telegram: str) -> ItemTeleg
 
 
 # noinspection PyPep8Naming
-def Item_to_ItemBase(item: Item,
-                     owner_id: uuid.UUID,
-                     item_id: uuid.UUID | None = None,
-                     recipient_id: uuid.UUID | None = None,
-                     status: ItemStatus = ItemStatus.listed
-                     ) -> ItemBase:
+def ItemRequest_to_ItemBase(item: ItemCreateRequest,
+                            owner_id: uuid.UUID,
+                            item_id: uuid.UUID | None = None,
+                            recipient_id: uuid.UUID | None = None,
+                            status: ItemStatus = ItemStatus.listed
+                            ) -> ItemBase:
     return ItemBase(
         id=item_id,
         owner_id=owner_id,
@@ -53,7 +54,8 @@ def Item_to_ItemBase(item: Item,
         description=item.description,
         location=item.location,
         category=item.category,
-        status=status
+        status=status,
+        request_id=item.request_id
     )
 
 
