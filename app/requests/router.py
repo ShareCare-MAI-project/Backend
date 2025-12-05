@@ -11,6 +11,7 @@ from app.utils.di.get_current_user import get_current_user
 from app.user.user_base import UserBase
 from app.requests.service import RequestService
 from app.requests.schemas import RequestWithId
+from app.common.schemas import ItemQuickInfoResponse
 
 router = APIRouter()
 
@@ -44,3 +45,13 @@ async def delete_request(
         user: UserBase = Depends(get_current_user)
 ):
     return await RequestService.delete_request(db, request_id=request_id, user_id=user.id)
+
+
+@router.get("/quick-info/{request_id}", response_model=ItemQuickInfoResponse)
+@handle_errors()
+async def get_item_quick_info(
+        request_id: uuid.UUID,
+        db: AsyncSession = Depends(get_async_db),
+        user: UserBase = Depends(get_current_user)
+):
+    return await RequestService.get_request_quick_info(db, request_id=request_id, user_id=user.id)

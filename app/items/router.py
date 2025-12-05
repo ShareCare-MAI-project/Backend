@@ -14,7 +14,7 @@ from app.utils.decorators.handle_errors import handle_errors
 from app.utils.di.get_current_user import get_current_user
 from app.utils.di.require_auth import require_auth
 from app.items.schemas import TransactionResponse
-from app.items.schemas import ItemQuickInfoResponse
+from app.common.schemas import ItemQuickInfoResponse
 
 router = APIRouter()
 

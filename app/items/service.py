@@ -17,12 +17,12 @@ from app.items.mappers import ItemBase_to_ItemResponse, ItemRequest_to_ItemBase,
 from app.items.mappers import ItemBase_to_TransactionResponse
 from app.items.models import ItemImageBase, ItemBase
 from app.items.schemas import ItemCreateRequest
-from app.items.schemas import ItemQuickInfoResponse
 from app.items.schemas import ItemResponse, Item
 from app.items.schemas import TransactionResponse
 from app.requests.cruds.request_crud import RequestCrud
 from app.utils.consts import SUCCESS_RESPONSE
 from app.user.user_base import UserBase
+from app.common.schemas import ItemQuickInfoResponse
 
 
 class ItemsService:
