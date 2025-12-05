@@ -29,4 +29,4 @@ async def search(
         db: AsyncSession = Depends(get_async_db),
         user: UserBase = Depends(get_current_user)
 ):
-    return await ShareCareService.search_requests(db, request, user_id=user.id, organization_name=user.organization_name)
+    return await ShareCareService.search_requests(db, request, user_id=user.id)

@@ -14,8 +14,9 @@ from app.common.schemas import SearchRequest
 from app.requests.models import RequestDeliveryTypeBase, RequestBase
 from app.requests.schemas import RequestResponse
 from app.utils.funcs.search_init_statement import search_init_statement
-from app.requests.mappers import request_bases_to_request_responses
+from app.requests.mappers import RequestBase_to_RequestResponse
 from app.items.service import ItemsService
+from app.user.user_base import UserBase
 
 
 class ShareCareService:
@@ -42,8 +43,7 @@ class ShareCareService:
     async def search_requests(
             db: AsyncSession,
             request: SearchRequest,
-            user_id: uuid.UUID,
-            organization_name: str | None
+            user_id: uuid.UUID
     ) -> list[RequestResponse]:
         # https://habr.com/ru/companies/beeline_cloud/articles/742214/?ysclid=milavy3vv3200505062
         stmt = search_init_statement(base=RequestBase, delivery_base=RequestDeliveryTypeBase, category=request.category,
@@ -64,4 +64,5 @@ class ShareCareService:
         stmt = stmt.offset(request.offset).limit(request.to_load)
 
         result = await db.scalars(stmt)
-        return request_bases_to_request_responses(list(result.all()), organization_name=organization_name)
+
+        return [RequestBase_to_RequestResponse(request_base, organization_name=(await UserBase.get_by_id(user_id=request_base.user_id, session=db)).organization_name) for request_base in list(result.all())]
