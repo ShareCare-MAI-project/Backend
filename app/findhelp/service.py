@@ -81,7 +81,7 @@ class FindHelpService:
                 ).desc()
             )
         else:
-            stmt = stmt.order_by(RequestBase.edited_at.desc())
+            stmt = stmt.order_by(ItemBase.edited_at.desc())
 
         stmt = stmt.offset(request.offset).limit(request.to_load)
 
