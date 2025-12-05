@@ -1,5 +1,6 @@
 import logging
 
+import starlette.exceptions
 from fastapi import HTTPException
 from starlette import status
 import asyncio
@@ -13,7 +14,7 @@ def handle_errors(error_message: str = "Внутренняя ошибка сер
         async def async_wrapper(*args, **kwargs):
             try:
                 return await func(*args, **kwargs)
-            except HTTPException:
+            except (HTTPException, starlette.exceptions.HTTPException):
                 raise
             except Exception as e:
                 logging.error(f"Error in {func.__name__}: {e}")

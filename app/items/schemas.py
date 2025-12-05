@@ -15,8 +15,25 @@ class Item(BaseModel):
     delivery_types: list[ItemDelivery]
 
 
+class ItemCreateRequest(Item):
+    request_id: Optional[UUID7 | None]
+
+
 class ItemResponse(Item):
     id: UUID7
     owner: UUID7
     recipient: Optional[UUID7] = None
     images: list[str]
+
+
+class ItemTelegramResponse(ItemResponse):
+    telegram: str
+
+
+class TransactionResponse(BaseModel):
+    item_id: UUID7
+    title: str
+    description: str
+    image_link: str
+    is_recipient: bool
+    date_of_receipt: str

@@ -67,15 +67,11 @@ class AuthService:
 
     @staticmethod
     async def register_user(db: AsyncSession, user: UserBase, request: UserRegistrationRequest):
-        name = request.name
-        telegram = request.telegram
-        new_user = UserBase(
-            id=user.id,  # по айди понимает, что мы меняем =)
-            name=name,
-            telegram_username=telegram
-        )
+        user.name = request.name
+        if request.telegram != "######":  # до сдачи проекта -1 день
+            user.telegram_username = request.telegram
         await UserBase.update(
-            new_user, session=db
+            user, session=db
         )
         await db.commit()
 

@@ -1,16 +1,19 @@
 import json
+import uuid
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, status, Form, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_async_db
-from app.items.schemas import ItemResponse, Item
+from app.items.schemas import ItemCreateRequest, Item
+from app.items.schemas import ItemResponse
 from app.items.service import ItemsService
 from app.user.user_base import UserBase
 from app.utils.decorators.handle_errors import handle_errors
 from app.utils.di.get_current_user import get_current_user
 from app.utils.di.require_auth import require_auth
+from app.items.schemas import TransactionResponse
 
 router = APIRouter()
 
@@ -34,10 +37,31 @@ async def create_item(
         # _=Depends(require_auth) Не нужно, т.к. выше мы получаем пользователя
 ):
     item_dict = json.loads(item_data)
-    item = Item(**item_dict)
+    item = ItemCreateRequest(**item_dict)
     return await ItemsService.create_item(
         db, item=item, images=images, owner_id=user.id
     )
+
+
+@router.delete("/", status_code=status.HTTP_200_OK)
+@handle_errors()
+async def delete_item(
+        item_id: uuid.UUID,
+        db: AsyncSession = Depends(get_async_db),
+        user: UserBase = Depends(get_current_user)
+):
+    return await ItemsService.delete_item(db, item_id=item_id, user_id=user.id)
+
+
+@router.patch("/", status_code=status.HTTP_200_OK)
+@handle_errors()
+async def edit_item(
+        item: Item,
+        item_id: uuid.UUID,
+        db: AsyncSession = Depends(get_async_db),
+        user: UserBase = Depends(get_current_user)
+):
+    return await ItemsService.edit_item(db, item=item, item_id=item_id, user_id=user.id)
 
 
 @router.get("/{item_id}", response_model=ItemResponse)
@@ -48,6 +72,35 @@ async def get_item(
         _=Depends(require_auth)
 ):
     return await ItemsService.get_item(db, item_id)
+
+
+@router.patch("/accept/{item_id}")
+@handle_errors()
+async def accept_item(
+        item_id: uuid.UUID,
+        db: AsyncSession = Depends(get_async_db),
+        user: UserBase = Depends(get_current_user)
+):
+    return await ItemsService.accept_item(db, user_id=user.id, item_id=item_id)
+
+
+@router.patch("/deny/{item_id}")
+@handle_errors()
+async def deny_item(
+        item_id: uuid.UUID,
+        db: AsyncSession = Depends(get_async_db),
+        user: UserBase = Depends(get_current_user)
+):
+    return await ItemsService.deny_item(db, user_id=user.id, item_id=item_id)
+
+
+@router.get("/transactions/{user_id}", response_model=list[TransactionResponse])
+@handle_errors()
+async def fetch_transactions(
+        user_id: uuid.UUID,
+        db: AsyncSession = Depends(get_async_db),
+):
+    return await ItemsService.fetch_transactions(db, user_id=user_id)
 
 # @router.delete("/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
 # @handle_errors()
