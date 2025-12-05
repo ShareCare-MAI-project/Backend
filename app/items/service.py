@@ -4,7 +4,7 @@ from uuid import UUID
 
 import uuid_utils
 from fastapi import UploadFile, HTTPException
-from sqlalchemy import or_, and_
+from sqlalchemy import or_, and_, select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 from starlette.status import HTTP_404_NOT_FOUND, HTTP_409_CONFLICT
@@ -14,17 +14,58 @@ from app.items.cruds.item_delivery_crud import ItemDeliveryCrud
 from app.items.cruds.item_image_crud import ItemImageCrud
 from app.items.enums import ItemStatus
 from app.items.mappers import ItemBase_to_ItemResponse, ItemRequest_to_ItemBase, ItemDelivery_to_ItemDeliveryTypeBase
+from app.items.mappers import ItemBase_to_TransactionResponse
 from app.items.models import ItemImageBase, ItemBase
 from app.items.schemas import ItemCreateRequest
+from app.items.schemas import ItemQuickInfoResponse
 from app.items.schemas import ItemResponse, Item
 from app.items.schemas import TransactionResponse
 from app.requests.cruds.request_crud import RequestCrud
 from app.utils.consts import SUCCESS_RESPONSE
-from app.items.mappers import ItemBase_to_TransactionResponse
+from app.user.user_base import UserBase
 
 
 class ItemsService:
     acceptance = dict()
+
+    @staticmethod
+    async def get_item_quick_info(db: AsyncSession, item_id: uuid.UUID, user_id: uuid.UUID) -> ItemQuickInfoResponse:
+        item = await ItemCrud.get_item(db, item_id)
+
+        if not item:
+            raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="Товар не найден")
+
+        item: ItemBase = item
+        show_owner = item.status == ItemStatus.listed or item.owner_id != user_id
+
+        to_show_id = item.owner_id if show_owner else item.recipient_id
+
+        # noinspection PyTypeChecker
+        user = await UserBase.get_by_id(to_show_id, db)
+
+        opponent_donated = db.scalar(
+            select(func.count(ItemBase.id)).where(and_(
+                ItemBase.owner_id == user.id,
+                ItemBase.status == ItemStatus.closed
+            ))
+        )
+
+        opponent_received = db.scalar(
+            select(func.count(ItemBase.id)).where(and_(
+                ItemBase.recipient_id == user.id,
+                ItemBase.status == ItemStatus.closed
+            ))
+        )
+        # noinspection PyTypeChecker
+        return ItemQuickInfoResponse(
+            status=item.status,
+            opponent_id=user.id,
+            opponent_name=user.name,
+            opponent_is_verified=user.is_verified,
+            opponent_organization_name=user.organization_name,
+            opponent_donated=(await opponent_donated) or 0,
+            opponent_received=(await opponent_received) or 0
+        )
 
     @staticmethod
     async def accept_item(db: AsyncSession, item_id: uuid.UUID, user_id: uuid.UUID):
