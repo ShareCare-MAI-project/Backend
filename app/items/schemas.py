@@ -1,8 +1,10 @@
+import uuid
 from typing import Optional
 
 from pydantic import BaseModel, UUID7
 
 from app.items.enums import ItemCategory, ItemDelivery
+from app.items.enums import ItemStatus
 
 
 class Item(BaseModel):
@@ -37,3 +39,13 @@ class TransactionResponse(BaseModel):
     image_link: str
     is_recipient: bool
     date_of_receipt: str
+
+
+class ItemQuickInfoResponse(BaseModel):
+    status: ItemStatus
+    opponent_id: uuid.UUID
+    opponent_name: str
+    opponent_is_verified: bool
+    opponent_organization_name: str | None
+    opponent_donated: int
+    opponent_received: int

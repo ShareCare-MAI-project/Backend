@@ -14,6 +14,7 @@ from app.utils.decorators.handle_errors import handle_errors
 from app.utils.di.get_current_user import get_current_user
 from app.utils.di.require_auth import require_auth
 from app.items.schemas import TransactionResponse
+from app.items.schemas import ItemQuickInfoResponse
 
 router = APIRouter()
 
@@ -101,6 +102,16 @@ async def fetch_transactions(
         db: AsyncSession = Depends(get_async_db),
 ):
     return await ItemsService.fetch_transactions(db, user_id=user_id)
+
+
+@router.get("/quick-info/{item_id}", response_model=ItemQuickInfoResponse)
+@handle_errors()
+async def get_item_quick_info(
+        item_id: uuid.UUID,
+        db: AsyncSession = Depends(get_async_db),
+        user: UserBase = Depends(get_current_user)
+):
+    return await ItemsService.get_item_quick_info(db, item_id=item_id,user_id=user.id)
 
 # @router.delete("/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
 # @handle_errors()
