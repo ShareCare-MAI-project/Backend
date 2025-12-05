@@ -11,3 +11,9 @@ class UserFullInfoResponse(BaseModel):
     is_verified: bool = Field(description="Подтверждён аккаунт или нет")
     organization_name: Optional[str] = Field(None, max_length=40,
                                              description="Название организации (если есть)")
+
+class QuickInfoResponse(BaseModel):
+    name: str
+    is_verified: bool
+    items_received: int
+    items_donated: int
