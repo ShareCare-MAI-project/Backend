@@ -20,7 +20,7 @@ services:
     depends_on:
       - postgres
     command: ["python", "-m", "app.main"]
-    # Для горячей перезагрузки (если приложение использует uvicorn)
+    # Для горячей перезагрузки 
     environment:
       - PYTHONUNBUFFERED=1  # Без буферизации для логов
 
