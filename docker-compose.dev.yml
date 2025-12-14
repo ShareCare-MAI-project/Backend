@@ -1,0 +1,38 @@
+# Docker Compose для разработки с горячей перезагрузкой кода
+# Использование: docker-compose -f docker-compose.dev.yml up
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile-app
+      target: runtime
+    env_file:
+      - ./.env
+    working_dir: /sharecare
+    # Bind mount для синхронизации кода в реальном времени
+    volumes:
+      - ./app:/sharecare/app  # ← Код синхронизируется сразу
+      - ./uploads:/sharecare/uploads
+    restart: unless-stopped
+    ports:
+      - "${SERVER_PORT}:${SERVER_PORT}"
+    depends_on:
+      - postgres
+    command: ["python", "-m", "app.main"]
+    # Для горячей перезагрузки (если приложение использует uvicorn)
+    environment:
+      - PYTHONUNBUFFERED=1  # Без буферизации для логов
+
+  postgres:
+    image: postgres:18-alpine3.22
+    env_file:
+      - ./.env
+    ports:
+      - "${POSTGRES_PORT}:${POSTGRES_PORT}"
+    hostname: ${HOST}
+    volumes:
+      - ./db:/var/lib/postgresql
+    working_dir: /sharecare
+    restart: unless-stopped
+    command: -p ${POSTGRES_PORT}
