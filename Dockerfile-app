@@ -2,7 +2,7 @@
 FROM python:3.13.9-alpine3.22 AS builder
 WORKDIR /venv_build
 COPY pyproject.toml uv.lock ./
-RUN apk add uv && uv sync
+RUN apk add --no-cache uv && uv sync
 
 # RUNTIME
 FROM python:3.13.9-alpine3.22 AS runtime
@@ -12,9 +12,6 @@ COPY --from=builder /venv_build/.venv /sharecare/.venv
 COPY ./app ./app
 ENV PATH="/sharecare/.venv/bin:$PATH"
 
-# Health check для мониторинга контейнера
+# Health check 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD python -c "import sys; sys.exit(0)" || exit 1
-
-
-
+  CMD python -m app.main --healthcheck || exit 1
