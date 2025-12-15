@@ -1,5 +1,4 @@
-# Docker Compose для разработки с горячей перезагрузкой кода
-# Использование: docker-compose -f docker-compose.dev.yml up
+version: "3.9"
 
 services:
   app:
@@ -10,19 +9,20 @@ services:
     env_file:
       - ./.env
     working_dir: /sharecare
-    # Bind mount для синхронизации кода в реальном времени
     volumes:
-      - ./app:/sharecare/app  # ← Код синхронизируется сразу
+      - ./app:/sharecare/app
       - ./uploads:/sharecare/uploads
     restart: unless-stopped
     ports:
       - "${SERVER_PORT}:${SERVER_PORT}"
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     command: ["python", "-m", "app.main"]
-    # Для горячей перезагрузки 
     environment:
-      - PYTHONUNBUFFERED=1  # Без буферизации для логов
+      - PYTHONUNBUFFERED=1
+    networks:
+      - app_net
 
   postgres:
     image: postgres:18-alpine3.22
@@ -32,7 +32,21 @@ services:
       - "${POSTGRES_PORT}:${POSTGRES_PORT}"
     hostname: ${HOST}
     volumes:
-      - ./db:/var/lib/postgresql
+      - db_data:/var/lib/postgresql/data
     working_dir: /sharecare
     restart: unless-stopped
     command: -p ${POSTGRES_PORT}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB} -p ${POSTGRES_PORT} || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app_net
+
+volumes:
+  db_data:
+
+networks:
+  app_net:
+    driver: bridge
