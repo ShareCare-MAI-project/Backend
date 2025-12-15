@@ -13,4 +13,5 @@ dependencies = [
     "asyncpg",
     "uuid-utils",
     "openai",
+    "pytest",
 ]
